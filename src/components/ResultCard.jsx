@@ -18,7 +18,9 @@
  *  - slotNumber: number or string (e.g. 1)
  *  - onCopy, onToggleShortlist, isShortlisted, onToggleCompare, isCompared, copiedDomain
  */
-import { PixelDivider } from './pixel/PixelElements.jsx'
+import { useState } from 'react'
+import { PixelDivider, PixelSparkle } from './pixel/PixelElements.jsx'
+import { useDecryptedText } from '../utils/useDecryptedText.js'
 
 export default function ResultCard({
   name,
@@ -35,50 +37,114 @@ export default function ResultCard({
   onToggleCompare,
   isCompared = false,
   copiedDomain,
+  isLocked = false,
+  onToggleLock,
+  enableDecryption = true,
+  soundFX,
 }) {
+  const [burst, setBurst] = useState(false)
   const currentStatus = availability || state || 'available'
   const isAvail = currentStatus === 'available'
   const fullDomain = `${domain}${tld}`
   const isCopied = copiedDomain === fullDomain
 
+  // Decryption cipher scramble for brand name & domain (only for unlocked slots)
+  const displayName = useDecryptedText(name, name, enableDecryption && !isLocked)
+  const displaySlug = useDecryptedText(domain, domain, enableDecryption && !isLocked)
+  const displayFullDomain = `${displaySlug}${tld}`
+
+  const handleShortlistClick = () => {
+    if (!isShortlisted) {
+      setBurst(true)
+      if (soundFX) soundFX.playCoin()
+      setTimeout(() => setBurst(false), 900)
+    }
+    if (onToggleShortlist) onToggleShortlist()
+  }
+
+  const handleLockClick = () => {
+    if (soundFX) {
+      if (isLocked) soundFX.playUnlock()
+      else soundFX.playLock()
+    }
+    if (onToggleLock) onToggleLock()
+  }
+
+  const handleCopyClick = () => {
+    if (soundFX) soundFX.playAvailable()
+    if (onCopy) onCopy(fullDomain)
+  }
+
+  const animDelay = isLocked ? '0ms' : `${Math.min(4, Math.max(0, Number(slotNumber) - 1)) * 65}ms`
+
   return (
     <div
-      className={`border-4 border-black bg-white pixel-shadow overflow-hidden transition-transform hover:-translate-y-0.5 ${className}`}
+      style={{ animationDelay: animDelay }}
+      className={`relative border-4 bg-white overflow-hidden transition-all duration-200 ${
+        isLocked
+          ? 'border-[#ff2a8d] shadow-[5px_5px_0px_0px_#ff2a8d] animate-locked-pulse'
+          : 'border-black pixel-shadow hover:-translate-y-1 animate-slot-reel'
+      } arcade-scanlines ${className}`}
     >
+      {/* Floating XP / Star Burst Notification on Shortlist */}
+      {burst && (
+        <div className="absolute top-4 right-20 z-50 pointer-events-none animate-sparkle-float flex items-center gap-1.5 border-2 border-black bg-[#ff2a8d] px-2.5 py-1 text-white font-pixel text-[11px] shadow-[3px_3px_0px_0px_#000]">
+          <PixelSparkle className="size-3 text-white" />
+          <span>+10 XP // SAVED ★</span>
+        </div>
+      )}
       <div className="p-6 sm:p-7">
-        {/* Card Top Strip */}
+        {/* Card Top Strip: Slot + Lock Button + Availability */}
         <div className="flex items-center justify-between border-b-2 border-black pb-2.5 mb-4">
           <div className="flex items-center gap-2">
-            <span className="bg-black text-white px-2 py-0.5 font-pixel text-[10px]">
+            <span className={`px-2 py-0.5 font-pixel text-[10px] ${isLocked ? 'bg-[#ff2a8d] text-white' : 'bg-black text-white'}`}>
               SLOT {String(slotNumber).padStart(2, '0')}
             </span>
-            <span className="font-mono text-[11px] text-[#737373]">
+
+            {/* HOLD / LOCK Slot Toggle */}
+            {onToggleLock && (
+              <button
+                type="button"
+                onClick={handleLockClick}
+                title={isLocked ? 'Click to unlock this slot' : 'Hold this card while rolling next batch'}
+                className={`flex items-center gap-1 border-2 border-black px-2 py-0.5 font-pixel text-[9px] tracking-wider transition-all pixel-btn cursor-pointer ${
+                  isLocked
+                    ? 'bg-[#ff2a8d] text-white font-bold shadow-[2px_2px_0px_0px_#000]'
+                    : 'bg-[#faf8f5] text-black hover:bg-black hover:text-white'
+                }`}
+              >
+                <span>{isLocked ? 'LOCKED 🔒' : 'HOLD / LOCK'}</span>
+              </button>
+            )}
+
+            <span className="hidden sm:inline font-mono text-[11px] text-[#737373]">
               PRIMARY: {tld.toUpperCase()}
             </span>
           </div>
           <span
-            className={`font-pixel text-[10px] px-2.5 py-0.5 border-2 ${
+            className={`font-pixel text-[10px] px-2.5 py-0.5 border-2 inline-flex items-center gap-1.5 ${
               isAvail
-                ? 'border-black bg-[#22c55e] text-black font-bold'
+                ? 'border-black bg-[#22c55e] text-black font-bold shadow-[2px_2px_0px_0px_#000]'
                 : 'border-[#cac4d0] bg-[#faf8f5] text-[#737373]'
             }`}
           >
-            {isAvail ? 'AVAILABLE' : 'TAKEN'}
+            {isAvail && <span className="inline-block size-1.5 bg-black animate-ping" />}
+            <span>{isAvail ? 'AVAILABLE' : 'TAKEN'}</span>
           </span>
         </div>
 
         {/* Main Name & Domain Identity Row */}
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
-            <h2 className="font-pixel text-[26px] sm:text-[32px] text-black leading-tight">
-              {name}
+            <h2 className="font-pixel text-[26px] sm:text-[32px] text-black leading-tight tracking-tight">
+              {displayName}
             </h2>
             <p
               className={`mt-1 font-mono text-[16px] font-bold ${
                 isAvail ? 'text-black' : 'text-[#8a8a8a] line-through'
               }`}
             >
-              {fullDomain}
+              {displayFullDomain}
             </p>
           </div>
 
@@ -87,8 +153,10 @@ export default function ResultCard({
             {onCopy && (
               <button
                 type="button"
-                onClick={() => onCopy(fullDomain)}
-                className="font-bold border-2 border-black px-3 py-1.5 bg-[#faf8f5] hover:bg-black hover:text-white transition-colors cursor-pointer"
+                onClick={handleCopyClick}
+                className={`font-bold border-2 border-black px-3 py-1.5 transition-all cursor-pointer pixel-btn ${
+                  isCopied ? 'bg-black text-white shadow-[2px_2px_0px_0px_#22c55e]' : 'bg-[#faf8f5] hover:bg-black hover:text-white'
+                }`}
               >
                 {isCopied ? 'COPIED! ✓' : 'COPY DOMAIN'}
               </button>
@@ -96,10 +164,10 @@ export default function ResultCard({
             {onToggleShortlist && (
               <button
                 type="button"
-                onClick={onToggleShortlist}
-                className={`border-2 px-3 py-1.5 font-bold transition-colors cursor-pointer ${
+                onClick={handleShortlistClick}
+                className={`border-2 px-3 py-1.5 font-bold transition-all cursor-pointer pixel-btn ${
                   isShortlisted
-                    ? 'border-[#ff2a8d] bg-[#ff2a8d] text-white'
+                    ? 'border-[#ff2a8d] bg-[#ff2a8d] text-white animate-coin-bling shadow-[2px_2px_0px_0px_#000]'
                     : 'border-black bg-white hover:bg-black hover:text-white'
                 }`}
               >
@@ -122,17 +190,19 @@ export default function ResultCard({
                   ? extItem.available
                   : true
               return (
-                <span
+                <button
                   key={ext}
-                  className={`border px-2.5 py-0.5 font-bold transition-colors ${
+                  type="button"
+                  onClick={() => onCopy && onCopy(`${domain}${ext}`)}
+                  className={`border px-2.5 py-0.5 font-bold transition-colors cursor-pointer pixel-btn ${
                     isAvailable
-                      ? 'border-black bg-[#faf8f5] text-black'
+                      ? 'border-black bg-[#faf8f5] text-black hover:border-[#ff2a8d] hover:bg-black hover:text-white'
                       : 'border-[#cac4d0] bg-[#f0ede6] text-[#8a8a8a] line-through'
                   }`}
-                  title={isAvailable ? `${ext} is available` : `${ext} is taken`}
+                  title={isAvailable ? `Click to copy ${domain}${ext}` : `${domain}${ext} is taken`}
                 >
                   {domain}{ext}
-                </span>
+                </button>
               )
             })}
           </div>
@@ -142,9 +212,9 @@ export default function ResultCard({
             <button
               type="button"
               onClick={onToggleCompare}
-              className={`border-2 px-3 py-1 font-bold transition-colors cursor-pointer ${
+              className={`border-2 px-3 py-1 font-bold transition-all cursor-pointer pixel-btn ${
                 isCompared
-                  ? 'border-black bg-black text-white'
+                  ? 'border-black bg-black text-white shadow-[2px_2px_0px_0px_#ff2a8d]'
                   : 'border-[#cac4d0] bg-white text-black hover:border-black'
               }`}
             >

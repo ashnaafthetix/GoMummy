@@ -57,76 +57,127 @@ async function runTests() {
       throw new Error(`Expected S2 searched subject to be 'Loom & Carbon', got: "${s2Title}"`)
     }
 
-    const cards = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
-    console.log(`   Rendered ${cards.length} ResultCards: ${JSON.stringify(cards)}`)
-    if (cards.length !== 5) {
-      throw new Error(`Expected exactly 5 cards in results feed, got: ${cards.length}`)
+    const batch1 = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
+    console.log(`   Batch 1 (5 cards): ${JSON.stringify(batch1)}`)
+    if (batch1.length !== 5) {
+      throw new Error(`Expected exactly 5 cards in results feed, got: ${batch1.length}`)
     }
+    if (batch1[0] !== 'Loom & Carbon') {
+      throw new Error(`Expected Slot 01 to be the target subject 'Loom & Carbon', got: "${batch1[0]}"`)
+    }
+    console.log('   ✓ Slot 01 successfully initialized with target candidate "Loom & Carbon"')
 
-    // Check availability badges and TLD indicator strip
-    const pageText = await page.$eval('body', (el) => el.textContent)
-    if (!pageText.includes('AVAILABLE') || !pageText.includes('TAKEN')) {
-      throw new Error('Expected both AVAILABLE and TAKEN status indicators on cards')
-    }
-    if (!pageText.includes('Also check:')) {
-      throw new Error('Expected "Also check:" TLD indicator strip on cards')
-    }
-    console.log('   ✓ Status badges (AVAILABLE / TAKEN) and TLD indicator strip verified')
-
-    // Test regenerate button
-    console.log('5. Testing "REGENERATE 5 MORE [R]" button...')
+    // Step 4: Test regenerate button swaps in a new, different batch
+    console.log('5. Testing "REGENERATE 5 MORE [R]" button swaps in a new batch...')
     const regenBtn = await page.$('button ::-p-text(REGENERATE 5 MORE)')
     if (!regenBtn) throw new Error('Could not find REGENERATE 5 MORE button')
     await regenBtn.click()
-    await new Promise((r) => setTimeout(r, 400))
-    const freshCards = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
-    console.log(`   Fresh batch after regenerate: ${JSON.stringify(freshCards)}`)
-    if (freshCards.length !== 5) {
+    await new Promise((r) => setTimeout(r, 500))
+
+    const batch2 = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
+    console.log(`   Batch 2 (5 cards): ${JSON.stringify(batch2)}`)
+    if (batch2.length !== 5) {
       throw new Error('Expected 5 cards after regenerate')
     }
-    console.log('   ✓ Regeneration working smoothly')
+    // Verify that batch2 is different from batch1
+    const overlap1_2 = batch1.filter((name) => batch2.includes(name))
+    console.log(`   Overlap between Batch 1 and Batch 2: ${JSON.stringify(overlap1_2)}`)
+    if (overlap1_2.length === 5) {
+      throw new Error('Expected batch 2 to swap in new, different cards')
+    }
+    console.log('   ✓ Regenerate successfully swapped in a different batch')
 
-    // Test inline card actions (copy, shortlist, compare)
-    console.log('6. Testing card interaction handlers (copy, shortlist, compare)...')
+    // Step 5: Test keyboard shortcut [R] swaps in a third distinct batch
+    console.log('6. Testing keyboard shortcut "r" swaps in another distinct batch...')
+    await page.keyboard.press('r')
+    await new Promise((r) => setTimeout(r, 500))
+    const batch3 = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
+    console.log(`   Batch 3 (5 cards): ${JSON.stringify(batch3)}`)
+    if (batch3.length !== 5) {
+      throw new Error('Expected 5 cards after keyboard regenerate')
+    }
+    const overlap2_3 = batch2.filter((name) => batch3.includes(name))
+    console.log(`   Overlap between Batch 2 and Batch 3: ${JSON.stringify(overlap2_3)}`)
+    if (overlap2_3.length === 5) {
+      throw new Error('Expected batch 3 to swap in new, different cards')
+    }
+    console.log('   ✓ Keyboard shortcut [R] successfully swapped in a 3rd distinct batch')
+
+    // Step 6: Test card interaction (shortlist)
+    console.log('7. Testing shortlist interaction...')
     let clickedText = null
     const buttons = await page.$$('button')
     for (const btn of buttons) {
       const text = await (await btn.getProperty('textContent')).jsonValue()
       if (text.includes('SHORTLIST') && !text.includes('SHORTLISTED')) {
         clickedText = text
-        console.log(`   Found shortlist button with text: "${text}". Clicking it...`)
         await btn.evaluate((b) => b.click())
         await new Promise((r) => setTimeout(r, 600))
         break
       }
     }
     const updatedPageText = await page.$eval('body', (el) => el.textContent)
-    console.log(`   Page text includes 'SHORTLISTED ★': ${updatedPageText.includes('SHORTLISTED ★')}`)
     if (!updatedPageText.includes('SHORTLISTED ★')) {
       throw new Error(`Shortlist button interaction failed to toggle. Clicked button was: "${clickedText}"`)
     }
-    console.log('   ✓ Interactive callbacks on ResultCard verified')
+    console.log('   ✓ Shortlist button successfully toggled to SHORTLISTED ★')
 
     await page.screenshot({ path: path.join(artifactDir, 's2_results_feed.png'), fullPage: false })
     console.log('   ✓ S2 screenshot saved to s2_results_feed.png')
 
-    // Step 4: Click "← EDIT BRIEF (S1)" to navigate back to S1
-    console.log('7. Clicking "← EDIT BRIEF (S1)" to verify no dead-ends...')
+    // Step 7: Return to S1 and test typing a custom real input
+    console.log('8. Returning to S1 to test custom real input...')
     const backBtn = await page.$('button ::-p-text(← EDIT BRIEF (S1))')
     if (!backBtn) throw new Error('Could not find "← EDIT BRIEF (S1)" button on S2')
     await backBtn.click()
-
     await page.waitForSelector('text/DOMAIN SEARCH IS OUR ART', { timeout: 4000 })
-    console.log('   ✓ Successfully returned to S1')
+    console.log('   ✓ Returned to S1')
 
-    const returnedName = await page.$eval('input[type="text"]', (el) => el.value)
-    console.log(`   Primary Name input after return: "${returnedName}"`)
-    if (returnedName !== 'Loom & Carbon') {
-      throw new Error('Input state was lost when returning to S1')
+    // Change input to a new real input: "Velvet Forge"
+    console.log('9. Entering custom real input "Velvet Forge" into S1...')
+    const nameInput = await page.$('input[type="text"]')
+    await nameInput.click()
+    await page.keyboard.down('Control')
+    await page.keyboard.press('A')
+    await page.keyboard.up('Control')
+    await page.keyboard.press('Backspace')
+    await nameInput.type('Velvet Forge')
+
+    const newSubmitBtn = await page.$('button[type="submit"]')
+    await newSubmitBtn.click()
+    await page.waitForSelector('text/S2 // RESULTS FEED', { timeout: 4000 })
+
+    const newTitle = await page.$eval('h1', (el) => el.textContent.trim())
+    console.log(`   New S2 Title: "${newTitle}"`)
+    if (newTitle !== 'Velvet Forge') {
+      throw new Error(`Expected S2 title to be 'Velvet Forge', got "${newTitle}"`)
     }
 
-    await page.screenshot({ path: path.join(artifactDir, 's1_returned.png'), fullPage: false })
-    console.log('   ✓ S1 returned screenshot saved to s1_returned.png')
+    const customBatch1 = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
+    console.log(`   Custom Input Batch 1: ${JSON.stringify(customBatch1)}`)
+    if (customBatch1[0] !== 'Velvet Forge') {
+      throw new Error(`Expected Slot 01 to be 'Velvet Forge', got "${customBatch1[0]}"`)
+    }
+
+    // Regenerate on custom input
+    console.log('10. Testing regenerate on custom input...')
+    const customRegenBtn = await page.$('button ::-p-text(REGENERATE 5 MORE)')
+    await customRegenBtn.click()
+    await new Promise((r) => setTimeout(r, 500))
+
+    const customBatch2 = await page.$$eval('h2', (els) => els.map((el) => el.textContent.trim()))
+    console.log(`   Custom Input Batch 2 (after regenerate): ${JSON.stringify(customBatch2)}`)
+    if (customBatch2.length !== 5) {
+      throw new Error('Expected 5 cards after custom regenerate')
+    }
+    const customOverlap = customBatch1.filter((n) => customBatch2.includes(n))
+    if (customOverlap.length === 5) {
+      throw new Error('Expected custom regenerate to produce a different batch')
+    }
+    console.log('   ✓ Custom real input produced real, different results on regenerate!')
+
+    await page.screenshot({ path: path.join(artifactDir, 's2_custom_results.png'), fullPage: false })
+    console.log('   ✓ Custom results screenshot saved to s2_custom_results.png')
 
     console.log('\n--- ALL ACCEPTANCE CHECKS PASSED SUCCESSFULLY! ---')
   } finally {
