@@ -146,41 +146,36 @@ export default function App() {
     const initialTarget = getTargetCard(CANDIDATE_POOL, values)
     setTargetCard(initialTarget)
 
-    let candidates = []
-    let usedAi = false
+    // 1. INSTANT ZERO-LATENCY TRANSITION: Show tailored candidates and switch to Results immediately
+    const immediateBatch = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
+    setResults(immediateBatch)
+    setView('results')
 
+    // 2. Immediately initiate live Google DoH check on subject & initial candidates
+    enrichWithRealDomainChecks(immediateBatch, initialTarget)
+
+    // 3. Concurrently fetch Gemini AI creative names in the background
     try {
       if (getGeminiKey()) {
-        candidates = await generateGeminiBrandNames({ brief: values, generation: 0, answers })
-        usedAi = true
-      } else {
-        candidates = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
+        const aiCandidates = await generateGeminiBrandNames({ brief: values, generation: 0, answers })
+        if (aiCandidates && aiCandidates.length >= 5) {
+          const aiBatch = aiCandidates.slice(0, 5)
+          setResults(aiBatch)
+          // Run live Google DoH check on newly arrived AI names
+          await enrichWithRealDomainChecks(aiBatch, initialTarget)
+        }
       }
     } catch (err) {
-      console.warn('Gemini generation error, falling back to local pool:', err)
+      console.warn('Gemini generation notice:', err)
       if (err.isDailyLimit || err.status === 429) {
         setApiNotice({
           isDailyLimit: true,
-          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local fallback candidates for now.',
-        })
-      } else {
-        setApiNotice({
-          isDailyLimit: false,
-          message: 'AI service currently unreachable. Showing local fallback candidates.',
+          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
         })
       }
-      candidates = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
     } finally {
       isSearchingRef.current = false
     }
-
-    // Set the 5 cards and switch view seamlessly
-    const initialBatch = candidates.slice(0, 5)
-    setResults(initialBatch)
-    setView('results')
-
-    // Perform live domain checks across all 5 candidates + subject target
-    await enrichWithRealDomainChecks(initialBatch, initialTarget)
   }
 
   const regenerate = async () => {
