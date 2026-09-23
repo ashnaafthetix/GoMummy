@@ -149,25 +149,29 @@ export default function App() {
     soundFX.playSpin()
 
     const initialTarget = getTargetCard(CANDIDATE_POOL, values)
-    setTargetCard(initialTarget)
+    const targetWithChecking = initialTarget ? { ...initialTarget, state: 'checking' } : null
+    setTargetCard(targetWithChecking)
 
     // 1. INSTANT ZERO-LATENCY TRANSITION: Show tailored candidates and switch to Results immediately
-    const immediateBatch = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
+    const immediateBatch = pickBatch(CANDIDATE_POOL, [], values, 0, answers).map((c) => ({
+      ...c,
+      state: 'checking',
+    }))
     setResults(immediateBatch)
     setView('results')
 
     // 2. Immediately initiate live Google DoH check on subject & initial candidates
-    enrichWithRealDomainChecks(immediateBatch, initialTarget)
+    enrichWithRealDomainChecks(immediateBatch, targetWithChecking)
 
     // 3. Concurrently fetch Gemini AI creative names in the background
     try {
       if (getGeminiKey()) {
         const aiCandidates = await generateGeminiBrandNames({ brief: values, generation: 0, answers })
         if (aiCandidates && aiCandidates.length >= 5) {
-          const aiBatch = aiCandidates.slice(0, 5)
+          const aiBatch = aiCandidates.slice(0, 5).map((c) => ({ ...c, state: 'checking' }))
           setResults(aiBatch)
           // Run live Google DoH check on newly arrived AI names
-          await enrichWithRealDomainChecks(aiBatch, initialTarget)
+          await enrichWithRealDomainChecks(aiBatch, targetWithChecking)
         }
       }
     } catch (err) {
@@ -198,7 +202,7 @@ export default function App() {
       brief,
       nextGen,
       answers
-    )
+    ).map((c) => ({ ...c, state: 'checking' }))
 
     // Preserve locked slots strictly in place, replace unlocked slots instantly
     const updatedBatch = results.map((oldCard, idx) =>

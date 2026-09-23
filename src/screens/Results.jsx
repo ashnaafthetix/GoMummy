@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import ResultCard from '../components/ResultCard.jsx'
 import SubjectCheckBanner from '../components/SubjectCheckBanner.jsx'
 import { PixelDivider, PixelDino, PixelHeart, PixelSparkle } from '../components/pixel/PixelElements.jsx'
-import { SITUATIONS_DATA, SITUATION_PRESETS } from '../data/situationsMockData.js'
 
 const TLD_OPTIONS = ['any', '.com', '.io', '.ai']
 const LENGTH_OPTIONS = [
@@ -56,30 +55,8 @@ export default function Results({
 }) {
   const [copiedDomain, setCopiedDomain] = useState(null)
   const [answerDraft, setAnswerDraft] = useState('')
-  const [scenario, setScenario] = useState(SITUATION_PRESETS.NORMAL)
 
-  // Keyboard shortcut listener to toggle scenarios with number keys (0-4)
-  useEffect(() => {
-    const handleKey = (e) => {
-      const tag = document.activeElement?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      if (e.key === '0') setScenario(SITUATION_PRESETS.NORMAL)
-      if (e.key === '1') setScenario(SITUATION_PRESETS.NOTHING)
-      if (e.key === '2') setScenario(SITUATION_PRESETS.TOO_MUCH)
-      if (e.key === '3') setScenario(SITUATION_PRESETS.WRONG)
-      if (e.key === '4') setScenario(SITUATION_PRESETS.WAITING)
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [])
-
-  // Derive active situational state
-  const activePreset = SITUATIONS_DATA[scenario]
-  const effectiveTarget = activePreset?.targetCard || targetCard
-  const rawResults = scenario === SITUATION_PRESETS.NOTHING ? [] : activePreset?.cards || results
-  const effectiveNotice = activePreset?.notice !== undefined ? activePreset.notice : apiNotice
-
-  const visible = rawResults.filter((r) => matchesFilters(r, filters))
+  const visible = results.filter((r) => matchesFilters(r, filters))
   const unlockedCount = 5 - lockedSlots.size
   const allLocked = lockedSlots.size === 5
 
@@ -134,57 +111,22 @@ export default function Results({
           </div>
         )}
 
-        {/* DEV SCENARIO SWITCHER (SITUATIONS DEV BAR) */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-4 border-black bg-white p-3 pixel-shadow">
-          <div className="flex items-center gap-2">
-            <span className="size-2.5 bg-[#ff2a8d] animate-pulse" />
-            <span className="font-pixel text-[10px] text-black tracking-wider">
-              SITUATIONS DEV BAR:
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 font-pixel text-[9px]">
-            {[
-              { key: SITUATION_PRESETS.NORMAL, label: '0: NORMAL' },
-              { key: SITUATION_PRESETS.NOTHING, label: '1: NOTHING' },
-              { key: SITUATION_PRESETS.TOO_MUCH, label: '2: TOO MUCH' },
-              { key: SITUATION_PRESETS.WRONG, label: '3: WRONG (429)' },
-              { key: SITUATION_PRESETS.WAITING, label: '4: WAITING' },
-            ].map((preset) => {
-              const isActive = scenario === preset.key
-              return (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => setScenario(preset.key)}
-                  className={`border-2 px-2.5 py-1 font-bold cursor-pointer transition-all pixel-btn ${
-                    isActive
-                      ? 'border-black bg-black text-white shadow-[2px_2px_0px_0px_#ff2a8d]'
-                      : 'border-black bg-[#faf8f5] text-black hover:bg-black hover:text-white'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
         {/* API NOTIFICATION / QUOTA LIMIT BANNER */}
-        {effectiveNotice && (
+        {apiNotice && (
           <div className="mb-6 border-4 border-black bg-white p-4 pixel-shadow flex items-center justify-between gap-4 arcade-scanlines">
             <div className="flex items-center gap-3">
               <span className="text-2xl animate-bounce">⚠️</span>
               <div>
                 <p className="font-pixel text-[10px] text-[#ff2a8d] uppercase tracking-wider">
-                  {effectiveNotice.isDailyLimit ? 'GEMINI QUOTA 429 NOTIFICATION' : 'AI SERVICE NOTICE'}
+                  {apiNotice.isDailyLimit ? 'GEMINI QUOTA 429 NOTIFICATION' : 'AI SERVICE NOTICE'}
                 </p>
-                <p className="font-mono text-[12px] font-bold text-black">{effectiveNotice.message}</p>
-                {effectiveNotice.suggestion && (
-                  <p className="font-mono text-[11px] text-[#737373] mt-0.5">{effectiveNotice.suggestion}</p>
+                <p className="font-mono text-[12px] font-bold text-black">{apiNotice.message}</p>
+                {apiNotice.suggestion && (
+                  <p className="font-mono text-[11px] text-[#737373] mt-0.5">{apiNotice.suggestion}</p>
                 )}
               </div>
             </div>
-            {onDismissNotice && scenario === SITUATION_PRESETS.NORMAL && (
+            {onDismissNotice && (
               <button
                 type="button"
                 onClick={onDismissNotice}
@@ -293,13 +235,13 @@ export default function Results({
         {/* JOB 01: PERSISTENT SUBJECT DOMAIN CHECK HERO BANNER */}
         <SubjectCheckBanner
           brief={brief}
-          targetCard={effectiveTarget}
+          targetCard={targetCard}
           copiedDomain={copiedDomain}
           onCopy={copy}
           onToggleShortlist={onToggleShortlist}
-          isShortlisted={shortlist.some((s) => s.domain === effectiveTarget?.domain)}
+          isShortlisted={shortlist.some((s) => s.domain === targetCard?.domain)}
           onToggleCompare={onToggleCompare}
-          isCompared={compareSel.some((s) => s.domain === effectiveTarget?.domain)}
+          isCompared={compareSel.some((s) => s.domain === targetCard?.domain)}
           soundFX={soundFX}
         />
 
