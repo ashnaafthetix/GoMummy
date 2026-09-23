@@ -179,56 +179,31 @@ export default function App() {
   }
 
   const regenerate = async () => {
-    if (isSearchingRef.current) return
     if (pendingQuestion !== null) return
     if (lockedSlots.size === 5) return // all locked
 
-    isSearchingRef.current = true
     soundFX.playSpin()
     const nextGen = generation + 1
     setGeneration(nextGen)
 
-    let freshCandidates = []
-    try {
-      if (getGeminiKey()) {
-        freshCandidates = await generateGeminiBrandNames({ brief, generation: nextGen, answers })
-      } else {
-        freshCandidates = pickBatch(
-          CANDIDATE_POOL,
-          results.map((r) => r.domain),
-          brief,
-          nextGen,
-          answers
-        )
-      }
-    } catch (err) {
-      console.warn('Gemini generation error on regenerate:', err)
-      if (err.isDailyLimit || err.status === 429) {
-        setApiNotice({
-          isDailyLimit: true,
-          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local fallback candidates for now.',
-        })
-      }
-      freshCandidates = pickBatch(
-        CANDIDATE_POOL,
-        results.map((r) => r.domain),
-        brief,
-        nextGen,
-        answers
-      )
-    } finally {
-      isSearchingRef.current = false
-    }
+    // 1. INSTANT ZERO-LATENCY ROLL (0ms): Populate fresh candidates derived from brief immediately
+    const freshCandidates = pickBatch(
+      CANDIDATE_POOL,
+      results.map((r) => r.domain),
+      brief,
+      nextGen,
+      answers
+    )
 
-    // Preserve locked slots strictly in place, replace unlocked slots
+    // Preserve locked slots strictly in place, replace unlocked slots instantly
     const updatedBatch = results.map((oldCard, idx) =>
       lockedSlots.has(idx) ? oldCard : freshCandidates[idx] || oldCard
     )
     setResults(updatedBatch)
 
-    // Run real domain check for newly spawned unlocked candidates
+    // 2. INSTANT LIVE DOMAIN CHECK: Check newly spawned unlocked candidates with Google DoH (~100ms)
     const unlockedToCheck = updatedBatch.filter((_, idx) => !lockedSlots.has(idx))
-    await enrichWithRealDomainChecks(unlockedToCheck, null)
+    enrichWithRealDomainChecks(unlockedToCheck, null)
 
     setRegenCount((n) => {
       const next = n + 1
@@ -241,6 +216,32 @@ export default function App() {
       }
       return next
     })
+
+    // 3. NON-BLOCKING BACKGROUND AI: Fetch creative names in background without stalling UI
+    if (getGeminiKey()) {
+      generateGeminiBrandNames({ brief, generation: nextGen, answers })
+        .then((aiCandidates) => {
+          if (aiCandidates && aiCandidates.length >= 5) {
+            setResults((current) => {
+              const enriched = current.map((oldCard, idx) =>
+                lockedSlots.has(idx) ? oldCard : aiCandidates[idx] || oldCard
+              )
+              const newlyAdded = enriched.filter((_, idx) => !lockedSlots.has(idx))
+              enrichWithRealDomainChecks(newlyAdded, null)
+              return enriched
+            })
+          }
+        })
+        .catch((err) => {
+          console.warn('Gemini background enrichment notice on regenerate:', err)
+          if (err.isDailyLimit || err.status === 429) {
+            setApiNotice({
+              isDailyLimit: true,
+              message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
+            })
+          }
+        })
+    }
   }
 
   // Keyboard shortcut: Pressing 'r' or 'R' regenerates when viewing results
