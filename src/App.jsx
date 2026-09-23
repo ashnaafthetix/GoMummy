@@ -33,7 +33,12 @@ function getHunterRank(xp) {
 }
 
 export default function App() {
-  const [view, setView] = useState('brief')
+  const [view, setView] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('view=results')) {
+      return 'results'
+    }
+    return 'brief'
+  })
   const [questionsOpen, setQuestionsOpen] = useState(false)
 
   const [brief, setBrief] = useState(INITIAL_BRIEF)

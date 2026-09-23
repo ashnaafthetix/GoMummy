@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ResultCard from '../components/ResultCard.jsx'
 import SubjectCheckBanner from '../components/SubjectCheckBanner.jsx'
 import { PixelDivider, PixelDino, PixelHeart, PixelSparkle } from '../components/pixel/PixelElements.jsx'
+import { SITUATIONS_DATA, SITUATION_PRESETS } from '../data/situationsMockData.js'
 
 const TLD_OPTIONS = ['any', '.com', '.io', '.ai']
 const LENGTH_OPTIONS = [
@@ -55,8 +56,30 @@ export default function Results({
 }) {
   const [copiedDomain, setCopiedDomain] = useState(null)
   const [answerDraft, setAnswerDraft] = useState('')
+  const [scenario, setScenario] = useState(SITUATION_PRESETS.NORMAL)
 
-  const visible = results.filter((r) => matchesFilters(r, filters))
+  // Keyboard shortcut listener to toggle scenarios with number keys (0-4)
+  useEffect(() => {
+    const handleKey = (e) => {
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === '0') setScenario(SITUATION_PRESETS.NORMAL)
+      if (e.key === '1') setScenario(SITUATION_PRESETS.NOTHING)
+      if (e.key === '2') setScenario(SITUATION_PRESETS.TOO_MUCH)
+      if (e.key === '3') setScenario(SITUATION_PRESETS.WRONG)
+      if (e.key === '4') setScenario(SITUATION_PRESETS.WAITING)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [])
+
+  // Derive active situational state
+  const activePreset = SITUATIONS_DATA[scenario]
+  const effectiveTarget = activePreset?.targetCard || targetCard
+  const rawResults = scenario === SITUATION_PRESETS.NOTHING ? [] : activePreset?.cards || results
+  const effectiveNotice = activePreset?.notice !== undefined ? activePreset.notice : apiNotice
+
+  const visible = rawResults.filter((r) => matchesFilters(r, filters))
   const unlockedCount = 5 - lockedSlots.size
   const allLocked = lockedSlots.size === 5
 
@@ -111,23 +134,61 @@ export default function Results({
           </div>
         )}
 
+        {/* DEV SCENARIO SWITCHER (SITUATIONS DEV BAR) */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-4 border-black bg-white p-3 pixel-shadow">
+          <div className="flex items-center gap-2">
+            <span className="size-2.5 bg-[#ff2a8d] animate-pulse" />
+            <span className="font-pixel text-[10px] text-black tracking-wider">
+              SITUATIONS DEV BAR:
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 font-pixel text-[9px]">
+            {[
+              { key: SITUATION_PRESETS.NORMAL, label: '0: NORMAL' },
+              { key: SITUATION_PRESETS.NOTHING, label: '1: NOTHING' },
+              { key: SITUATION_PRESETS.TOO_MUCH, label: '2: TOO MUCH' },
+              { key: SITUATION_PRESETS.WRONG, label: '3: WRONG (429)' },
+              { key: SITUATION_PRESETS.WAITING, label: '4: WAITING' },
+            ].map((preset) => {
+              const isActive = scenario === preset.key
+              return (
+                <button
+                  key={preset.key}
+                  type="button"
+                  onClick={() => setScenario(preset.key)}
+                  className={`border-2 px-2.5 py-1 font-bold cursor-pointer transition-all pixel-btn ${
+                    isActive
+                      ? 'border-black bg-black text-white shadow-[2px_2px_0px_0px_#ff2a8d]'
+                      : 'border-black bg-[#faf8f5] text-black hover:bg-black hover:text-white'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* API NOTIFICATION / QUOTA LIMIT BANNER */}
-        {apiNotice && (
-          <div className="mb-6 border-4 border-black bg-white p-4 pixel-shadow flex items-center justify-between gap-4">
+        {effectiveNotice && (
+          <div className="mb-6 border-4 border-black bg-white p-4 pixel-shadow flex items-center justify-between gap-4 arcade-scanlines">
             <div className="flex items-center gap-3">
-              <span className="text-xl">⚠️</span>
+              <span className="text-2xl animate-bounce">⚠️</span>
               <div>
-                <p className="font-pixel text-[10px] text-[#ff2a8d] uppercase">
-                  {apiNotice.isDailyLimit ? 'GEMINI QUOTA 429 NOTIFICATION' : 'AI SERVICE NOTICE'}
+                <p className="font-pixel text-[10px] text-[#ff2a8d] uppercase tracking-wider">
+                  {effectiveNotice.isDailyLimit ? 'GEMINI QUOTA 429 NOTIFICATION' : 'AI SERVICE NOTICE'}
                 </p>
-                <p className="font-mono text-[12px] font-bold text-black">{apiNotice.message}</p>
+                <p className="font-mono text-[12px] font-bold text-black">{effectiveNotice.message}</p>
+                {effectiveNotice.suggestion && (
+                  <p className="font-mono text-[11px] text-[#737373] mt-0.5">{effectiveNotice.suggestion}</p>
+                )}
               </div>
             </div>
-            {onDismissNotice && (
+            {onDismissNotice && scenario === SITUATION_PRESETS.NORMAL && (
               <button
                 type="button"
                 onClick={onDismissNotice}
-                className="font-pixel text-[10px] border-2 border-black bg-[#faf8f5] px-2.5 py-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
+                className="font-pixel text-[10px] border-2 border-black bg-[#faf8f5] px-2.5 py-1 hover:bg-black hover:text-white transition-colors cursor-pointer pixel-btn"
               >
                 DISMISS [✕]
               </button>
@@ -232,13 +293,13 @@ export default function Results({
         {/* JOB 01: PERSISTENT SUBJECT DOMAIN CHECK HERO BANNER */}
         <SubjectCheckBanner
           brief={brief}
-          targetCard={targetCard}
+          targetCard={effectiveTarget}
           copiedDomain={copiedDomain}
           onCopy={copy}
           onToggleShortlist={onToggleShortlist}
-          isShortlisted={shortlist.some((s) => s.domain === targetCard?.domain)}
+          isShortlisted={shortlist.some((s) => s.domain === effectiveTarget?.domain)}
           onToggleCompare={onToggleCompare}
-          isCompared={compareSel.some((s) => s.domain === targetCard?.domain)}
+          isCompared={compareSel.some((s) => s.domain === effectiveTarget?.domain)}
           soundFX={soundFX}
         />
 
@@ -279,15 +340,32 @@ export default function Results({
 
         {/* SINGLE-COLUMN CARD STACK */}
         {visible.length === 0 ? (
-          <div className="border-4 border-black bg-white p-8 text-center pixel-shadow">
-            <p className="font-pixel text-[14px] text-black">NO CANDIDATES MATCH FILTER SETTINGS.</p>
-            <button
-              type="button"
-              onClick={() => onFiltersChange({ tld: 'any', length: 'any' })}
-              className="mt-4 border-2 border-black bg-[#faf8f5] px-4 py-2 font-mono text-[12px] font-bold hover:bg-black hover:text-white transition-colors pixel-btn cursor-pointer"
-            >
-              RESET ALL FILTERS
-            </button>
+          <div className="border-4 border-black bg-white p-8 sm:p-12 text-center pixel-shadow relative arcade-scanlines mb-6">
+            <div className="inline-block bg-[#ff2a8d] text-white px-3 py-1 font-pixel text-[11px] mb-3 shadow-[2px_2px_0px_0px_#000]">
+              // ZERO CANDIDATES MATCH FILTER
+            </div>
+            <h3 className="font-pixel text-[20px] sm:text-[24px] text-black tracking-tight">
+              NO DOMAIN IDEAS FOUND
+            </h3>
+            <p className="mt-2 font-mono text-[13px] text-[#737373] max-w-[500px] mx-auto">
+              No candidates in this batch match your active filters (<span className="font-bold text-black font-mono">TLD: {filters.tld}</span>, <span className="font-bold text-black font-mono">LENGTH: {filters.length}</span>).
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => onFiltersChange({ tld: 'any', length: 'any' })}
+                className="border-2 border-black bg-[#faf8f5] px-4 py-2 font-mono text-[12px] font-bold hover:bg-black hover:text-white transition-colors pixel-btn cursor-pointer"
+              >
+                RESET ALL FILTERS
+              </button>
+              <button
+                type="button"
+                onClick={handleRegenClick}
+                className="border-2 border-black bg-[#ff2a8d] text-white px-4 py-2 font-pixel text-[11px] hover:bg-black transition-colors pixel-btn-pink cursor-pointer shadow-[2px_2px_0px_0px_#000]"
+              >
+                ROLL FRESH BATCH [R]
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">

@@ -29,6 +29,7 @@ export default function SubjectCheckBanner({
 
   if (!brief?.name || !targetCard) return null
 
+  const isChecking = targetCard.state === 'checking'
   const isAvail = targetCard.state === 'available'
   const fullDomain = `${targetCard.domain}${targetCard.tld}`
   const isCopied = copiedDomain === fullDomain
@@ -71,7 +72,12 @@ export default function SubjectCheckBanner({
 
           {/* AVAILABILITY BEACON BADGE */}
           <div className="flex items-center gap-2">
-            {isAvail ? (
+            {isChecking ? (
+              <span className="flex items-center gap-1.5 border-2 border-black bg-[#f59e0b] px-2.5 py-0.5 font-pixel text-[10px] font-bold text-black shadow-[2px_2px_0px_0px_#000]">
+                <span className="size-2 rounded-full bg-white animate-ping" />
+                CHECKING...
+              </span>
+            ) : isAvail ? (
               <span className="flex items-center gap-1.5 border-2 border-black bg-[#22c55e] px-2.5 py-0.5 font-pixel text-[10px] font-bold text-black shadow-[2px_2px_0px_0px_#000]">
                 <span className="size-2 rounded-full bg-white animate-pulse" />
                 AVAILABLE
@@ -87,17 +93,19 @@ export default function SubjectCheckBanner({
 
         {/* MAIN BODY: NAME + DOMAIN + ACTIONS */}
         <div className="mt-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-pixel text-[26px] sm:text-[34px] tracking-tight text-black leading-tight">
+          <div className="space-y-1 max-w-full">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-pixel text-[24px] sm:text-[32px] tracking-tight text-black leading-tight break-words max-w-full">
                 {displayName}
               </h2>
               {isAvail && <PixelSparkle className="size-5 text-[#ff2a8d] animate-spin" />}
             </div>
 
             <p
-              className={`font-mono text-[16px] sm:text-[18px] tracking-tight ${
-                isAvail
+              className={`font-mono text-[16px] sm:text-[18px] tracking-tight break-all ${
+                isChecking
+                  ? 'text-[#f59e0b] font-bold'
+                  : isAvail
                   ? 'text-black font-bold'
                   : 'text-[#737373] line-through decoration-black decoration-2'
               }`}
