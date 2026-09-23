@@ -31,6 +31,18 @@ export function cleanDomainSlug(str) {
  * Generate candidate brand names via Google Gemini API
  */
 export async function generateGeminiBrandNames({ brief, generation = 0, answers = {} }) {
+  // Intercept for simulating rate limit / in-flight loading state without burning real quota
+  if (
+    typeof window !== 'undefined' &&
+    (window.__SIMULATE_RATE_LIMIT || new URLSearchParams(window.location.search).get('simulate') === '429')
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 800))
+    const err = new Error('Daily Gemini API limit reached (429: Quota Exhausted).')
+    err.status = 429
+    err.isDailyLimit = true
+    throw err
+  }
+
   const apiKey = getGeminiKey()
   if (!apiKey) {
     const err = new Error('No Gemini API key found in .env.local')

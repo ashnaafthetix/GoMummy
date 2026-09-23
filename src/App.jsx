@@ -180,6 +180,7 @@ export default function App() {
         setApiNotice({
           isDailyLimit: true,
           message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
+          suggestion: 'Daily rate limit reached. The free tier quota resets daily.',
         })
       }
     } finally {
@@ -247,6 +248,7 @@ export default function App() {
             setApiNotice({
               isDailyLimit: true,
               message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
+              suggestion: 'Daily rate limit reached. The free tier quota resets daily.',
             })
           }
         })
