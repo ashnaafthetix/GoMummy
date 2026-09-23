@@ -32,13 +32,14 @@ async function runTest() {
     await page.waitForSelector('div[slotNumber], h2', { timeout: 5000 })
     await new Promise((r) => setTimeout(r, 800)) // allow cipher animation to finish
 
-    // Extract all visible cards and their primary TLDs
+    // Extract all visible candidate cards and their primary TLDs
     const getCardInfo = async () => {
       return await page.evaluate(() => {
-        const cards = Array.from(document.querySelectorAll('.notebook-grid h2'))
-        return cards.map((h2) => {
-          const name = h2.textContent.trim()
-          const domainEl = h2.parentElement?.querySelector('p')
+        const cards = Array.from(document.querySelectorAll('div[data-slot-card]'))
+        return cards.map((card) => {
+          const h2 = card.querySelector('h2')
+          const name = h2 ? h2.textContent.trim() : ''
+          const domainEl = card.querySelector('p.font-mono')
           const fullDomain = domainEl ? domainEl.textContent.trim() : ''
           return { name, fullDomain }
         })

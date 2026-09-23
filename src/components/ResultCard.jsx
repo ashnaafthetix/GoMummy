@@ -44,6 +44,7 @@ export default function ResultCard({
 }) {
   const [burst, setBurst] = useState(false)
   const currentStatus = availability || state || 'available'
+  const isChecking = currentStatus === 'checking'
   const isAvail = currentStatus === 'available'
   const fullDomain = `${domain}${tld}`
   const isCopied = copiedDomain === fullDomain
@@ -79,6 +80,7 @@ export default function ResultCard({
 
   return (
     <div
+      data-slot-card="true"
       style={{ animationDelay: animDelay }}
       className={`relative border-4 bg-white overflow-hidden transition-all duration-200 ${
         isLocked
@@ -123,25 +125,32 @@ export default function ResultCard({
           </div>
           <span
             className={`font-pixel text-[10px] px-2.5 py-0.5 border-2 inline-flex items-center gap-1.5 ${
-              isAvail
+              isChecking
+                ? 'border-black bg-[#f59e0b] text-black font-bold shadow-[2px_2px_0px_0px_#000]'
+                : isAvail
                 ? 'border-black bg-[#22c55e] text-black font-bold shadow-[2px_2px_0px_0px_#000]'
                 : 'border-[#cac4d0] bg-[#faf8f5] text-[#737373]'
             }`}
           >
+            {isChecking && <span className="inline-block size-1.5 bg-black animate-ping" />}
             {isAvail && <span className="inline-block size-1.5 bg-black animate-ping" />}
-            <span>{isAvail ? 'AVAILABLE' : 'TAKEN'}</span>
+            <span>{isChecking ? 'CHECKING...' : isAvail ? 'AVAILABLE' : 'TAKEN'}</span>
           </span>
         </div>
 
         {/* Main Name & Domain Identity Row */}
         <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <div>
-            <h2 className="font-pixel text-[26px] sm:text-[32px] text-black leading-tight tracking-tight">
+          <div className="max-w-full">
+            <h2 className="font-pixel text-[24px] sm:text-[30px] text-black leading-tight tracking-tight break-words max-w-full">
               {displayName}
             </h2>
             <p
-              className={`mt-1 font-mono text-[16px] font-bold ${
-                isAvail ? 'text-black' : 'text-[#8a8a8a] line-through'
+              className={`mt-1 font-mono text-[16px] font-bold break-all ${
+                isChecking
+                  ? 'text-[#f59e0b]'
+                  : isAvail
+                  ? 'text-black'
+                  : 'text-[#8a8a8a] line-through'
               }`}
             >
               {displayFullDomain}

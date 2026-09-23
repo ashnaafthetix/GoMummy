@@ -4,7 +4,7 @@ import Results from './screens/Results.jsx'
 import Shortlist from './screens/Shortlist.jsx'
 import Compare from './screens/Compare.jsx'
 import QuestionsPanel from './screens/QuestionsPanel.jsx'
-import { CANDIDATE_POOL, INITIAL_BRIEF, QUESTIONS, pickBatch } from './data.js'
+import { CANDIDATE_POOL, INITIAL_BRIEF, QUESTIONS, pickBatch, getTargetCard } from './data.js'
 import { soundFX } from './utils/audio.js'
 
 import RetroPreviewGallery from './components/pixel/RetroPreviewGallery.jsx'
@@ -12,6 +12,9 @@ import ResultsPreviewGallery from './components/results-dirs/ResultsPreviewGalle
 import ArcadeLab from './screens/ArcadeLab.jsx'
 import CompareModal from './components/modals/CompareModal.jsx'
 import ShortlistModal from './components/modals/ShortlistModal.jsx'
+
+import { generateGeminiBrandNames, getGeminiKey } from './services/geminiService.js'
+import { checkDomainAvailability, checkDomainsBatch } from './services/domainService.js'
 
 const REGENS_BEFORE_QUESTION = 3
 
@@ -30,10 +33,16 @@ function getHunterRank(xp) {
 }
 
 export default function App() {
-  const [view, setView] = useState('brief')
+  const [view, setView] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('view=results')) {
+      return 'results'
+    }
+    return 'brief'
+  })
   const [questionsOpen, setQuestionsOpen] = useState(false)
 
   const [brief, setBrief] = useState(INITIAL_BRIEF)
+  const [targetCard, setTargetCard] = useState(() => getTargetCard(CANDIDATE_POOL, INITIAL_BRIEF))
   const [generation, setGeneration] = useState(0)
   const [results, setResults] = useState(() => pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0))
   const [filters, setFilters] = useState({ tld: 'any', length: 'any' })
@@ -42,6 +51,7 @@ export default function App() {
   const [answers, setAnswers] = useState({})
   const [regenCount, setRegenCount] = useState(0)
   const [pendingQuestion, setPendingQuestion] = useState(null)
+  const [apiNotice, setApiNotice] = useState(null)
 
   // Gamification: Audio state, Hunter XP, Card HOLD/LOCK
   const [soundMuted, setSoundMuted] = useState(() => soundFX.getMuted())
@@ -50,6 +60,7 @@ export default function App() {
   const prevRankRef = useRef(hunterRank.title)
   const [levelUpToast, setLevelUpToast] = useState(null)
   const [lockedSlots, setLockedSlots] = useState(new Set())
+  const isSearchingRef = useRef(false)
 
   // Modal overlays for Compare & Shortlist
   const [compareModalOpen, setCompareModalOpen] = useState(false)
@@ -93,19 +104,91 @@ export default function App() {
     return idx === -1 ? null : idx
   }
 
-  const findNames = (values) => {
+  // Real domain check runner for a set of candidate items
+  const enrichWithRealDomainChecks = async (candidates, currentTarget) => {
+    const domainsToCheck = []
+    if (currentTarget) {
+      domainsToCheck.push(`${currentTarget.domain}${currentTarget.tld}`)
+    }
+    for (const c of candidates) {
+      domainsToCheck.push(`${c.domain}${c.tld}`)
+    }
+
+    const domainMap = await checkDomainsBatch(domainsToCheck)
+
+    // Update target card state
+    if (currentTarget) {
+      const fullTarget = `${currentTarget.domain}${currentTarget.tld}`
+      const targetState = domainMap[fullTarget] || 'unknown'
+      setTargetCard((prev) => (prev ? { ...prev, state: targetState } : prev))
+    }
+
+    // Update candidates state
+    setResults((prev) =>
+      prev.map((item) => {
+        const full = `${item.domain}${item.tld}`
+        if (domainMap[full] && domainMap[full] !== 'unknown') {
+          return { ...item, state: domainMap[full] }
+        }
+        return item
+      })
+    )
+  }
+
+  const findNames = async (values) => {
+    if (isSearchingRef.current) return
+    isSearchingRef.current = true
+
     setBrief(values)
     setGeneration(0)
     setLockedSlots(new Set())
-    setResults(pickBatch(CANDIDATE_POOL, [], values, 0, answers))
     setFilters({ tld: 'any', length: 'any' })
     setRegenCount(0)
     setPendingQuestion(null)
+    setApiNotice(null)
     soundFX.playSpin()
+
+    const initialTarget = getTargetCard(CANDIDATE_POOL, values)
+    const targetWithChecking = initialTarget ? { ...initialTarget, state: 'checking' } : null
+    setTargetCard(targetWithChecking)
+
+    // 1. INSTANT ZERO-LATENCY TRANSITION: Show tailored candidates and switch to Results immediately
+    const immediateBatch = pickBatch(CANDIDATE_POOL, [], values, 0, answers).map((c) => ({
+      ...c,
+      state: 'checking',
+    }))
+    setResults(immediateBatch)
     setView('results')
+
+    // 2. Immediately initiate live Google DoH check on subject & initial candidates
+    enrichWithRealDomainChecks(immediateBatch, targetWithChecking)
+
+    // 3. Concurrently fetch Gemini AI creative names in the background
+    try {
+      if (getGeminiKey()) {
+        const aiCandidates = await generateGeminiBrandNames({ brief: values, generation: 0, answers })
+        if (aiCandidates && aiCandidates.length >= 5) {
+          const aiBatch = aiCandidates.slice(0, 5).map((c) => ({ ...c, state: 'checking' }))
+          setResults(aiBatch)
+          // Run live Google DoH check on newly arrived AI names
+          await enrichWithRealDomainChecks(aiBatch, targetWithChecking)
+        }
+      }
+    } catch (err) {
+      console.warn('Gemini generation notice:', err)
+      if (err.isDailyLimit || err.status === 429) {
+        setApiNotice({
+          isDailyLimit: true,
+          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
+          suggestion: 'Daily rate limit reached. The free tier quota resets daily.',
+        })
+      }
+    } finally {
+      isSearchingRef.current = false
+    }
   }
 
-  const regenerate = () => {
+  const regenerate = async () => {
     if (pendingQuestion !== null) return
     if (lockedSlots.size === 5) return // all locked
 
@@ -113,19 +196,24 @@ export default function App() {
     const nextGen = generation + 1
     setGeneration(nextGen)
 
-    // Pick a fresh candidate pool
-    const freshPool = pickBatch(
+    // 1. INSTANT ZERO-LATENCY ROLL (0ms): Populate fresh candidates derived from brief immediately
+    const freshCandidates = pickBatch(
       CANDIDATE_POOL,
       results.map((r) => r.domain),
       brief,
       nextGen,
       answers
-    )
+    ).map((c) => ({ ...c, state: 'checking' }))
 
-    // Preserve locked cards strictly in place, replace unlocked slots
-    setResults((prev) =>
-      prev.map((oldCard, idx) => (lockedSlots.has(idx) ? oldCard : freshPool[idx] || oldCard))
+    // Preserve locked slots strictly in place, replace unlocked slots instantly
+    const updatedBatch = results.map((oldCard, idx) =>
+      lockedSlots.has(idx) ? oldCard : freshCandidates[idx] || oldCard
     )
+    setResults(updatedBatch)
+
+    // 2. INSTANT LIVE DOMAIN CHECK: Check newly spawned unlocked candidates with Google DoH (~100ms)
+    const unlockedToCheck = updatedBatch.filter((_, idx) => !lockedSlots.has(idx))
+    enrichWithRealDomainChecks(unlockedToCheck, null)
 
     setRegenCount((n) => {
       const next = n + 1
@@ -138,6 +226,33 @@ export default function App() {
       }
       return next
     })
+
+    // 3. NON-BLOCKING BACKGROUND AI: Fetch creative names in background without stalling UI
+    if (getGeminiKey()) {
+      generateGeminiBrandNames({ brief, generation: nextGen, answers })
+        .then((aiCandidates) => {
+          if (aiCandidates && aiCandidates.length >= 5) {
+            setResults((current) => {
+              const enriched = current.map((oldCard, idx) =>
+                lockedSlots.has(idx) ? oldCard : aiCandidates[idx] || oldCard
+              )
+              const newlyAdded = enriched.filter((_, idx) => !lockedSlots.has(idx))
+              enrichWithRealDomainChecks(newlyAdded, null)
+              return enriched
+            })
+          }
+        })
+        .catch((err) => {
+          console.warn('Gemini background enrichment notice on regenerate:', err)
+          if (err.isDailyLimit || err.status === 429) {
+            setApiNotice({
+              isDailyLimit: true,
+              message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local candidates.',
+              suggestion: 'Daily rate limit reached. The free tier quota resets daily.',
+            })
+          }
+        })
+    }
   }
 
   // Keyboard shortcut: Pressing 'r' or 'R' regenerates when viewing results
@@ -372,6 +487,7 @@ export default function App() {
       {view === 'results' && (
         <Results
           brief={brief}
+          targetCard={targetCard}
           results={results}
           filters={filters}
           onFiltersChange={setFilters}
@@ -391,6 +507,8 @@ export default function App() {
           onToggleLock={toggleLock}
           levelUpToast={levelUpToast}
           onDismissToast={() => setLevelUpToast(null)}
+          apiNotice={apiNotice}
+          onDismissNotice={() => setApiNotice(null)}
         />
       )}
       {view === 'retro-previews' && (
