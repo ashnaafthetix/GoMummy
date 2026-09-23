@@ -4,7 +4,7 @@ import Results from './screens/Results.jsx'
 import Shortlist from './screens/Shortlist.jsx'
 import Compare from './screens/Compare.jsx'
 import QuestionsPanel from './screens/QuestionsPanel.jsx'
-import { CANDIDATE_POOL, INITIAL_BRIEF, QUESTIONS, pickBatch } from './data.js'
+import { CANDIDATE_POOL, INITIAL_BRIEF, QUESTIONS, pickBatch, getTargetCard } from './data.js'
 import { soundFX } from './utils/audio.js'
 
 import RetroPreviewGallery from './components/pixel/RetroPreviewGallery.jsx'
@@ -12,6 +12,9 @@ import ResultsPreviewGallery from './components/results-dirs/ResultsPreviewGalle
 import ArcadeLab from './screens/ArcadeLab.jsx'
 import CompareModal from './components/modals/CompareModal.jsx'
 import ShortlistModal from './components/modals/ShortlistModal.jsx'
+
+import { generateGeminiBrandNames, getGeminiKey } from './services/geminiService.js'
+import { checkDomainAvailability, checkDomainsBatch } from './services/domainService.js'
 
 const REGENS_BEFORE_QUESTION = 3
 
@@ -34,6 +37,7 @@ export default function App() {
   const [questionsOpen, setQuestionsOpen] = useState(false)
 
   const [brief, setBrief] = useState(INITIAL_BRIEF)
+  const [targetCard, setTargetCard] = useState(() => getTargetCard(CANDIDATE_POOL, INITIAL_BRIEF))
   const [generation, setGeneration] = useState(0)
   const [results, setResults] = useState(() => pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0))
   const [filters, setFilters] = useState({ tld: 'any', length: 'any' })
@@ -42,6 +46,7 @@ export default function App() {
   const [answers, setAnswers] = useState({})
   const [regenCount, setRegenCount] = useState(0)
   const [pendingQuestion, setPendingQuestion] = useState(null)
+  const [apiNotice, setApiNotice] = useState(null)
 
   // Gamification: Audio state, Hunter XP, Card HOLD/LOCK
   const [soundMuted, setSoundMuted] = useState(() => soundFX.getMuted())
@@ -50,6 +55,7 @@ export default function App() {
   const prevRankRef = useRef(hunterRank.title)
   const [levelUpToast, setLevelUpToast] = useState(null)
   const [lockedSlots, setLockedSlots] = useState(new Set())
+  const isSearchingRef = useRef(false)
 
   // Modal overlays for Compare & Shortlist
   const [compareModalOpen, setCompareModalOpen] = useState(false)
@@ -93,39 +99,141 @@ export default function App() {
     return idx === -1 ? null : idx
   }
 
-  const findNames = (values) => {
+  // Real domain check runner for a set of candidate items
+  const enrichWithRealDomainChecks = async (candidates, currentTarget) => {
+    const domainsToCheck = []
+    if (currentTarget) {
+      domainsToCheck.push(`${currentTarget.domain}${currentTarget.tld}`)
+    }
+    for (const c of candidates) {
+      domainsToCheck.push(`${c.domain}${c.tld}`)
+    }
+
+    const domainMap = await checkDomainsBatch(domainsToCheck)
+
+    // Update target card state
+    if (currentTarget) {
+      const fullTarget = `${currentTarget.domain}${currentTarget.tld}`
+      const targetState = domainMap[fullTarget] || 'unknown'
+      setTargetCard((prev) => (prev ? { ...prev, state: targetState } : prev))
+    }
+
+    // Update candidates state
+    setResults((prev) =>
+      prev.map((item) => {
+        const full = `${item.domain}${item.tld}`
+        if (domainMap[full] && domainMap[full] !== 'unknown') {
+          return { ...item, state: domainMap[full] }
+        }
+        return item
+      })
+    )
+  }
+
+  const findNames = async (values) => {
+    if (isSearchingRef.current) return
+    isSearchingRef.current = true
+
     setBrief(values)
     setGeneration(0)
     setLockedSlots(new Set())
-    setResults(pickBatch(CANDIDATE_POOL, [], values, 0, answers))
     setFilters({ tld: 'any', length: 'any' })
     setRegenCount(0)
     setPendingQuestion(null)
+    setApiNotice(null)
     soundFX.playSpin()
+
+    const initialTarget = getTargetCard(CANDIDATE_POOL, values)
+    setTargetCard(initialTarget)
+
+    let candidates = []
+    let usedAi = false
+
+    try {
+      if (getGeminiKey()) {
+        candidates = await generateGeminiBrandNames({ brief: values, generation: 0, answers })
+        usedAi = true
+      } else {
+        candidates = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
+      }
+    } catch (err) {
+      console.warn('Gemini generation error, falling back to local pool:', err)
+      if (err.isDailyLimit || err.status === 429) {
+        setApiNotice({
+          isDailyLimit: true,
+          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local fallback candidates for now.',
+        })
+      } else {
+        setApiNotice({
+          isDailyLimit: false,
+          message: 'AI service currently unreachable. Showing local fallback candidates.',
+        })
+      }
+      candidates = pickBatch(CANDIDATE_POOL, [], values, 0, answers)
+    } finally {
+      isSearchingRef.current = false
+    }
+
+    // Set the 5 cards and switch view seamlessly
+    const initialBatch = candidates.slice(0, 5)
+    setResults(initialBatch)
     setView('results')
+
+    // Perform live domain checks across all 5 candidates + subject target
+    await enrichWithRealDomainChecks(initialBatch, initialTarget)
   }
 
-  const regenerate = () => {
+  const regenerate = async () => {
+    if (isSearchingRef.current) return
     if (pendingQuestion !== null) return
     if (lockedSlots.size === 5) return // all locked
 
+    isSearchingRef.current = true
     soundFX.playSpin()
     const nextGen = generation + 1
     setGeneration(nextGen)
 
-    // Pick a fresh candidate pool
-    const freshPool = pickBatch(
-      CANDIDATE_POOL,
-      results.map((r) => r.domain),
-      brief,
-      nextGen,
-      answers
-    )
+    let freshCandidates = []
+    try {
+      if (getGeminiKey()) {
+        freshCandidates = await generateGeminiBrandNames({ brief, generation: nextGen, answers })
+      } else {
+        freshCandidates = pickBatch(
+          CANDIDATE_POOL,
+          results.map((r) => r.domain),
+          brief,
+          nextGen,
+          answers
+        )
+      }
+    } catch (err) {
+      console.warn('Gemini generation error on regenerate:', err)
+      if (err.isDailyLimit || err.status === 429) {
+        setApiNotice({
+          isDailyLimit: true,
+          message: 'Daily Gemini API limit reached (429: Quota Exhausted). Showing local fallback candidates for now.',
+        })
+      }
+      freshCandidates = pickBatch(
+        CANDIDATE_POOL,
+        results.map((r) => r.domain),
+        brief,
+        nextGen,
+        answers
+      )
+    } finally {
+      isSearchingRef.current = false
+    }
 
-    // Preserve locked cards strictly in place, replace unlocked slots
-    setResults((prev) =>
-      prev.map((oldCard, idx) => (lockedSlots.has(idx) ? oldCard : freshPool[idx] || oldCard))
+    // Preserve locked slots strictly in place, replace unlocked slots
+    const updatedBatch = results.map((oldCard, idx) =>
+      lockedSlots.has(idx) ? oldCard : freshCandidates[idx] || oldCard
     )
+    setResults(updatedBatch)
+
+    // Run real domain check for newly spawned unlocked candidates
+    const unlockedToCheck = updatedBatch.filter((_, idx) => !lockedSlots.has(idx))
+    await enrichWithRealDomainChecks(unlockedToCheck, null)
 
     setRegenCount((n) => {
       const next = n + 1
@@ -372,6 +480,7 @@ export default function App() {
       {view === 'results' && (
         <Results
           brief={brief}
+          targetCard={targetCard}
           results={results}
           filters={filters}
           onFiltersChange={setFilters}
@@ -391,6 +500,8 @@ export default function App() {
           onToggleLock={toggleLock}
           levelUpToast={levelUpToast}
           onDismissToast={() => setLevelUpToast(null)}
+          apiNotice={apiNotice}
+          onDismissNotice={() => setApiNotice(null)}
         />
       )}
       {view === 'retro-previews' && (

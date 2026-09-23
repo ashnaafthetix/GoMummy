@@ -141,29 +141,38 @@ export const INITIAL_BRIEF = {
 
 export const ALL_TLDS = ['.com', '.io', '.ai']
 
-export function pickBatch(pool, excludeDomains = [], briefOrTarget = '', generation = 0, answers = {}) {
+export function getTargetCard(pool, briefOrTarget) {
   const briefObj =
     typeof briefOrTarget === 'string'
       ? { name: briefOrTarget, tld: '.com' }
       : briefOrTarget || INITIAL_BRIEF
 
   const targetName = (briefObj?.name || '').trim()
-  const targetTld = briefObj?.tld || '.com'
+  if (!targetName) return null
 
-  let targetCard = null
-  if (targetName) {
-    const slug = cleanSlug(targetName)
-    const existing = pool.find((c) => c.domain === slug)
-    const isAvail = existing ? existing.state === 'available' : (hashStr(slug + targetTld) % 100) < 45
-    targetCard = {
-      name: targetName,
-      domain: slug,
-      tld: targetTld,
-      state: isAvail ? 'available' : 'taken',
-      tlds: ALL_TLDS.filter((t) => t !== targetTld),
-      tags: slug.length <= 8 ? ['short'] : ['descriptive'],
-    }
+  const targetTld = briefObj?.tld || '.com'
+  const slug = cleanSlug(targetName)
+  const existing = pool.find((c) => c.domain === slug)
+  const isAvail = existing ? existing.state === 'available' : (hashStr(slug + targetTld) % 100) < 45
+
+  return {
+    name: targetName,
+    domain: slug,
+    tld: targetTld,
+    state: isAvail ? 'available' : 'taken',
+    tlds: ALL_TLDS.filter((t) => t !== targetTld),
+    tags: slug.length <= 8 ? ['short'] : ['descriptive'],
   }
+}
+
+export function pickBatch(pool, excludeDomains = [], briefOrTarget = '', generation = 0, answers = {}) {
+  const briefObj =
+    typeof briefOrTarget === 'string'
+      ? { name: briefOrTarget, tld: '.com' }
+      : briefOrTarget || INITIAL_BRIEF
+
+  const targetCard = getTargetCard(pool, briefObj)
+
 
   // Derive tokens from user's brief
   const seedTokens = tokens(briefObj?.name)
@@ -236,15 +245,13 @@ export function pickBatch(pool, excludeDomains = [], briefOrTarget = '', generat
   )
   const shuffled = shuffle(source, rnd)
 
-  // Assemble balanced 5-card batch ensuring active representation of .com, .io, and .ai
+  // Assemble balanced 5-card alternative batch ensuring active representation of .com, .io, and .ai
   const selected = []
   const usedDomains = new Set()
-
-  // On generation 0, if targetCard exists and is not excluded, Slot 01 is targetCard
-  if (generation === 0 && targetCard && !excludeDomains.includes(targetCard.domain)) {
-    selected.push(targetCard)
+  if (targetCard) {
     usedDomains.add(targetCard.domain)
   }
+
 
   // Ensure every batch has active representation of ALL key TLDs: .com, .io, .ai
   const presentTlds = new Set(selected.map((c) => c.tld))

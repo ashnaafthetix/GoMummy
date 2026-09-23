@@ -79,6 +79,7 @@ export default function ResultCard({
 
   return (
     <div
+      data-slot-card="true"
       style={{ animationDelay: animDelay }}
       className={`relative border-4 bg-white overflow-hidden transition-all duration-200 ${
         isLocked

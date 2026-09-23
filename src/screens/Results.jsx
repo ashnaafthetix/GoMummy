@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ResultCard from '../components/ResultCard.jsx'
+import SubjectCheckBanner from '../components/SubjectCheckBanner.jsx'
 import { PixelDivider, PixelDino, PixelHeart, PixelSparkle } from '../components/pixel/PixelElements.jsx'
 
 const TLD_OPTIONS = ['any', '.com', '.io', '.ai']
@@ -29,6 +30,7 @@ function matchesFilters(item, filters) {
  */
 export default function Results({
   brief,
+  targetCard,
   results,
   filters,
   onFiltersChange,
@@ -48,6 +50,8 @@ export default function Results({
   onToggleLock,
   levelUpToast,
   onDismissToast,
+  apiNotice,
+  onDismissNotice,
 }) {
   const [copiedDomain, setCopiedDomain] = useState(null)
   const [answerDraft, setAnswerDraft] = useState('')
@@ -104,6 +108,30 @@ export default function Results({
                 </button>
               )}
             </div>
+          </div>
+        )}
+
+        {/* API NOTIFICATION / QUOTA LIMIT BANNER */}
+        {apiNotice && (
+          <div className="mb-6 border-4 border-black bg-white p-4 pixel-shadow flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="font-pixel text-[10px] text-[#ff2a8d] uppercase">
+                  {apiNotice.isDailyLimit ? 'GEMINI QUOTA 429 NOTIFICATION' : 'AI SERVICE NOTICE'}
+                </p>
+                <p className="font-mono text-[12px] font-bold text-black">{apiNotice.message}</p>
+              </div>
+            </div>
+            {onDismissNotice && (
+              <button
+                type="button"
+                onClick={onDismissNotice}
+                className="font-pixel text-[10px] border-2 border-black bg-[#faf8f5] px-2.5 py-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
+              >
+                DISMISS [✕]
+              </button>
+            )}
           </div>
         )}
 
@@ -201,12 +229,26 @@ export default function Results({
           </div>
         </div>
 
+        {/* JOB 01: PERSISTENT SUBJECT DOMAIN CHECK HERO BANNER */}
+        <SubjectCheckBanner
+          brief={brief}
+          targetCard={targetCard}
+          copiedDomain={copiedDomain}
+          onCopy={copy}
+          onToggleShortlist={onToggleShortlist}
+          isShortlisted={shortlist.some((s) => s.domain === targetCard?.domain)}
+          onToggleCompare={onToggleCompare}
+          isCompared={compareSel.some((s) => s.domain === targetCard?.domain)}
+          soundFX={soundFX}
+        />
+
         {/* Batch Info & Gamified Arcade Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black pb-2.5 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="bg-[#ff2a8d] text-white px-2.5 py-0.5 font-pixel text-[10px] shadow-[2px_2px_0px_0px_#000]">
-              BATCH ACTIVE // 5 CANDIDATES
+              JOB 02 // 5 ALTERNATIVE CANDIDATES
             </span>
+
             {lockedSlots.size > 0 && (
               <span className="bg-black text-white px-2 py-0.5 font-pixel text-[10px] shadow-[2px_2px_0px_0px_#ff2a8d]">
                 🔒 {lockedSlots.size} HELD IN PLACE
