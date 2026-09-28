@@ -340,6 +340,7 @@ export default function App() {
       if (e.key === 'r' || e.key === 'R') {
         const tag = document.activeElement?.tagName
         if (tag === 'INPUT' || tag === 'TEXTAREA') return
+        if (shortlistModalOpen || compareModalOpen || viewfinderCard || questionsOpen || whoisDomain) return
         if (view === 'results' && pendingQuestion === null && lockedSlots.size < 5) {
           e.preventDefault()
           regenerate()
@@ -348,7 +349,7 @@ export default function App() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [view, pendingQuestion, brief, lockedSlots, results])
+  }, [view, pendingQuestion, brief, lockedSlots, results, shortlistModalOpen, compareModalOpen, viewfinderCard, questionsOpen, whoisDomain])
 
   const registerSelection = () => setRegenCount(0)
 

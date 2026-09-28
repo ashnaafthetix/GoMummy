@@ -767,11 +767,20 @@ export function generateHtmlDossier({
     </div>
   </div>
 
+  <script id="dossier-raw-md" type="text/plain">
+${generateMarkdownDossier({ shortlist, projectName }).replace(/<\//g, '<\\/')}
+  </script>
   <script>
     function copyMarkdown() {
-      const text = document.title + "\\n" + window.location.href;
+      const raw = document.getElementById('dossier-raw-md');
+      const text = raw ? raw.textContent.trim() : (document.title + "\\n" + window.location.href);
       navigator.clipboard.writeText(text).then(() => {
-        alert("Dossier presentation link ready!");
+        const btn = document.querySelector('.btn-action');
+        if (btn) {
+          const old = btn.innerHTML;
+          btn.innerHTML = '✓ Copied Markdown!';
+          setTimeout(() => { btn.innerHTML = old; }, 2000);
+        }
       });
     }
   </script>

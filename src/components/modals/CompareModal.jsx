@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { getDomainPrice, analyzePhonetics } from '../../services/domainService.js'
+import { getDomainPrice, analyzePhonetics, getPrimaryRegistrarUrl } from '../../services/domainService.js'
 import TorxScrew from '../hardware/TorxScrew.jsx'
 import PhotorealLED from '../hardware/PhotorealLED.jsx'
 
@@ -260,9 +260,10 @@ export default function CompareModal({
                             type="button"
                             onClick={() => {
                               if (soundFX) soundFX.playKeyThud()
-                              alert(`Redirecting to registrar for ${fullDomain} ($${price.reg})...`)
+                              window.open(getPrimaryRegistrarUrl(fullDomain), '_blank', 'noopener,noreferrer')
                             }}
                             className="tactile-pink-btn flex-1 py-2 rounded-xl text-white text-xs font-black cursor-pointer shadow-sm text-center"
+                            title={`Open ${price.registrar} 1-click cart in new tab`}
                           >
                             REGISTER ${price.reg} ➔
                           </button>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import TorxScrew from './TorxScrew.jsx'
 import PhotorealLED from './PhotorealLED.jsx'
-import { getDomainPrice, analyzePhonetics } from '../../services/domainService.js'
+import { getDomainPrice, analyzePhonetics, getPrimaryRegistrarUrl } from '../../services/domainService.js'
 
 /**
  * IdentityViewfinder: Photorealistic Real-World Identity Scope.
@@ -484,9 +484,10 @@ SSL:        DNS Verified (Google DoH)`
                     type="button"
                     onClick={() => {
                       if (soundFX) soundFX.playAvailable()
-                      alert(`Redirecting to ${price.registrar} to register ${fullDomain} ($${price.reg})...`)
+                      window.open(getPrimaryRegistrarUrl(fullDomain), '_blank', 'noopener,noreferrer')
                     }}
                     className="tactile-pink-btn px-6 py-2 rounded-xl text-white text-xs font-black cursor-pointer shadow-sm"
+                    title={`Open ${price.registrar} 1-click cart in new tab`}
                   >
                     REGISTER {fullDomain.toUpperCase()} ➔
                   </button>

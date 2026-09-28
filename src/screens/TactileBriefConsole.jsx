@@ -403,6 +403,12 @@ export default function TactileBriefConsole({
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                        e.preventDefault()
+                        handleSubmit()
+                      }
+                    }}
                     placeholder="Describe your brand essence, product traits, materials, and positioning..."
                     className="w-full bg-transparent text-xs sm:text-[13px] leading-relaxed font-mono text-neutral-800 focus:outline-none resize-none"
                   />
