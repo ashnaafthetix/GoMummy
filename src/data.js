@@ -239,11 +239,34 @@ export function pickBatch(pool, excludeDomains = [], briefOrTarget = '', generat
   const available = mergedPool.filter((c) => !excludeDomains.includes(c.domain))
   const source = available.length >= 5 ? available : mergedPool
 
-  // Deterministic shuffle with generation offset
+  // Deterministic random seed with generation offset
   const rnd = mulberry32(
     hashStr(`${briefObj?.name || ''}|${briefObj?.description || ''}|${generation}`)
   )
-  const shuffled = shuffle(source, rnd)
+
+  // Hardware Calibration Weighting (Creativity Dial & Faders)
+  const creativity = typeof briefObj?.creativity === 'number' ? briefObj.creativity : 65
+  const simpleVal = typeof briefObj?.faders?.simple === 'number' ? briefObj.faders.simple : 50
+  const premiumVal = typeof briefObj?.faders?.premium === 'number' ? briefObj.faders.premium : 80
+
+  const scored = source.map((c) => {
+    let score = rnd() * 10
+    const len = c.domain.length
+    // Simplicity fader: boost short domains (<= 8 chars)
+    if (simpleVal > 60 && len <= 8) score += (simpleVal / 20)
+    if (simpleVal < 35 && len > 8) score += 4
+    // Creativity dial: boost abstract neologisms vs literal compounds
+    const isAbstract = ABSTRACT.some((ab) => c.domain.includes(ab)) || c.domain.endsWith('ly') || c.domain.endsWith('hub') || c.domain.endsWith('sync')
+    if (creativity > 65 && isAbstract) score += 6
+    if (creativity < 35 && !isAbstract) score += 6
+    // Premium fader: boost heritage craft terms
+    const isHeritage = ['craft', 'wood', 'grain', 'oak', 'patina', 'loom', 'carbon', 'form', 'foundry', 'hearth'].some((w) => c.domain.includes(w))
+    if (premiumVal > 65 && isHeritage) score += 5
+    return { ...c, _score: score }
+  })
+
+  scored.sort((a, b) => b._score - a._score)
+  const shuffled = scored
 
   // Assemble balanced 5-card alternative batch ensuring active representation of .com, .io, and .ai
   const selected = []

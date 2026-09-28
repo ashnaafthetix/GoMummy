@@ -55,8 +55,71 @@ export async function generateGeminiBrandNames({ brief, generation = 0, answers 
     .map(([idx, ans]) => `- Brand Strategy Q#${idx}: "${ans}"`)
     .join('\n')
 
+  // Extract Hardware Control Parameters
+  const creativity = typeof brief?.creativity === 'number' ? brief.creativity : 65
+  const faders = brief?.faders || { innovative: 75, simple: 50, premium: 80 }
+  const simpleVal = typeof faders.simple === 'number' ? faders.simple : 50
+  const premiumVal = typeof faders.premium === 'number' ? faders.premium : 80
+  const innovVal = typeof faders.innovative === 'number' ? faders.innovative : 75
+
+  // 1. Dynamic Temperature based on Creativity Dial (0% = 0.25 focused/literal, 100% = 0.98 inventive/abstract)
+  const baseTemp = 0.25 + (creativity / 100) * 0.7
+  const temperature = Math.min(1.0, Math.max(0.2, baseTemp + Math.min(0.1, generation * 0.03)))
+
+  // 2. Naming Archetype Guidance based on Creativity
+  let archetypeInstruction = ''
+  if (creativity < 35) {
+    archetypeInstruction = `NAMING ARCHETYPE: STRICTLY COMPOUND & LITERAL.
+Combine 2 real, evocative English words with direct connection to the brief (e.g. CraftJoinery, UrbanHardwood, SolidTimber). Avoid made-up words or abstract coinages.`
+  } else if (creativity <= 70) {
+    archetypeInstruction = `NAMING ARCHETYPE: EVOCATIVE & BALANCED BLENDS.
+Create rich, metaphoric pairings, sensory associations, or dual-concept names (e.g. Loom & Carbon, Hearth & Frame, Foundry Grain, Solid Oak). Memorable, grounded, and dignified.`
+  } else {
+    archetypeInstruction = `NAMING ARCHETYPE: INVENTED NEOLOGISMS & MODERN ABSTRACTS.
+Invent punchy, coined words, synthetic portmanteaus, and futuristic abstract roots (e.g. Kroma, Velocraft, Atelierhub, Nexis, Formline). High distinctiveness.`
+  }
+
+  // 3. Length & Syllable Constraints based on Simple Fader
+  let simplicityInstruction = ''
+  if (simpleVal > 65) {
+    simplicityInstruction = `SYLLABLE CONSTRAINT (SIMPLE FADER AT ${simpleVal}%): Keep every candidate strictly 1 to 2 syllables and under 9 letters. Ultra-punchy, high cognitive fluency, effortless to pronounce.`
+  } else if (simpleVal < 35) {
+    simplicityInstruction = `LENGTH FREEDOM (SIMPLE FADER AT ${simpleVal}%): Multi-word expressions, rich compound nouns, or artisan studio titles (e.g. "Solid Wood Atelier") are welcome.`
+  } else {
+    simplicityInstruction = `SYLLABLE CONSTRAINT: Balance brevity with distinctiveness (around 2-3 syllables).`
+  }
+
+  // 4. Tone Bias based on Premium Fader
+  let toneInstruction = ''
+  if (premiumVal > 65) {
+    toneInstruction = `PREMIUM / HERITAGE BIAS (PREMIUM FADER AT ${premiumVal}%): Radiate architectural elegance, luxury restraint, noble materials, bespoke craftsmanship, and heirloom longevity.`
+  } else if (premiumVal < 35) {
+    toneInstruction = `ACCESSIBILITY BIAS (PREMIUM FADER AT ${premiumVal}%): Approachable, casual, democratic, friendly, and startup-ready.`
+  } else {
+    toneInstruction = `TONE BIAS: Refined, balanced commercial appeal.`
+  }
+
+  // 5. Engineering / Innovation Bias based on Innovative Fader
+  let innovationInstruction = ''
+  if (innovVal > 65) {
+    innovationInstruction = `INNOVATION FOCUS (INNOVATIVE FADER AT ${innovVal}%): Emphasize modular circularity, precision joinery, engineering honesty, and next-generation utility.`
+  }
+
   const prompt = `You are GoMummy, a world-class brand naming assistant and domain strategist.
-Generate 10 brand name ideas for the following brief:
+Generate 10 brand name ideas calibrated specifically to the following hardware console settings:
+
+HARDWARE CONSOLE PARAMETERS:
+- Creativity Dial: ${creativity}% (Temperature: ${temperature.toFixed(2)})
+- Simplicity Fader: ${simpleVal}%
+- Premium / Heritage Fader: ${premiumVal}%
+- Innovation Fader: ${innovVal}%
+
+STRATEGIC DIRECTIVES:
+${archetypeInstruction}
+${simplicityInstruction}
+${toneInstruction}
+${innovationInstruction ? innovationInstruction + '\n' : ''}
+BRIEF DETAILS:
 - Primary Subject Name: "${brief.name || 'N/A'}"
 - Brand Description & Tone: "${brief.description || 'N/A'}"
 - Competitors & Negative Keywords (NEVER copy or collide): "${brief.competitors || 'N/A'}"
@@ -65,15 +128,15 @@ ${answeredPrompts ? `Additional Strategic Inputs:\n${answeredPrompts}` : ''}
 Generation Batch Offset: ${generation}
 
 CRITICAL RULES:
-1. Provide creative, memorable, brandable names (1-2 words).
+1. Provide creative, memorable, brandable names tailored strictly to the hardware parameters above.
 2. Avoid generic corporate clutter (no "Solutions", "Enterprises", "LLC", "Consulting").
 3. DO NOT collide with competitor names.
 4. Distribute TLDs naturally across .com, .io, and .ai.
 5. Return ONLY a valid JSON array of objects with keys:
-   - "name": String (Display brand name, e.g. "KeebCraft Atelier" or "Verve")
-   - "slug": String (alphanumeric domain slug without extension, e.g. "keebcraftatelier")
+   - "name": String (Display brand name, e.g. "Loom & Carbon" or "Atelierhub")
+   - "slug": String (alphanumeric domain slug without extension, e.g. "loomcarbon")
    - "tld": String (".com", ".io", or ".ai")
-   - "rationale": String (1 punchy sentence why it fits the brand)
+   - "rationale": String (1 punchy sentence why it fits the brief & hardware faders)
 
 Respond ONLY with the JSON array, no markdown fences, no explanatory text.`
 
@@ -84,7 +147,7 @@ Respond ONLY with the JSON array, no markdown fences, no explanatory text.`
       },
     ],
     generationConfig: {
-      temperature: 0.85 + Math.min(0.2, generation * 0.05),
+      temperature,
       maxOutputTokens: 1000,
       responseMimeType: 'application/json',
     },
