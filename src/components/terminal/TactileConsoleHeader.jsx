@@ -21,14 +21,14 @@ export default function TactileConsoleHeader({
   return (
     <header className="w-full max-w-[1240px] mx-auto mb-6 px-2 sm:px-4">
       {/* Molded White/Cream Capsule Bar */}
-      <div className="relative rounded-full bg-gradient-to-b from-[#ffffff] via-[#f7f5f0] to-[#ece8e1] border-[2px] border-[#d8d4cc] px-4 py-2 sm:py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.06),0_1px_0_rgba(255,255,255,0.9)_inset] flex flex-wrap items-center justify-between gap-3 font-mono">
+      <div className="relative rounded-2xl sm:rounded-full bg-gradient-to-b from-[#ffffff] via-[#f7f5f0] to-[#ece8e1] border-[2px] border-[#d8d4cc] px-3 sm:px-4 py-2 sm:py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.06),0_1px_0_rgba(255,255,255,0.9)_inset] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 font-mono">
         
         {/* Subtle Corner Screws on Header */}
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] text-neutral-400 select-none">✜</span>
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-neutral-400 select-none">✜</span>
+        <span className="hidden sm:block absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] text-neutral-400 select-none">✜</span>
+        <span className="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-neutral-400 select-none">✜</span>
 
         {/* Brand Identity */}
-        <div className="flex items-center gap-2 pl-3">
+        <div className="flex items-center gap-2 pl-1 sm:pl-3">
           <span className="font-mono font-black text-sm sm:text-base tracking-wider text-black">
             GOMUMMY
           </span>
@@ -36,7 +36,7 @@ export default function TactileConsoleHeader({
         </div>
 
         {/* Center Capsule Tabs */}
-        <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-0.5">
+        <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full py-0.5 no-scrollbar scroll-smooth">
           {/* 01 BRIEF TAB */}
           <button
             type="button"

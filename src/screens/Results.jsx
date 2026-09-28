@@ -167,7 +167,7 @@ export default function Results({
           </div>
 
           {/* Transport Cluster: Tape Deck Scrubber + Master Regenerate */}
-          <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 self-start lg:self-auto shrink-0 w-full sm:w-auto justify-between sm:justify-start flex-wrap sm:flex-nowrap">
             <TapeDeckScrubber
               historyIndex={historyIndex}
               totalBatches={totalBatches}
@@ -185,7 +185,7 @@ export default function Results({
                 }
                 onRegenerate()
               }}
-              className="tactile-pink-btn px-4 py-2 rounded-xl text-white font-mono text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-sm"
+              className="tactile-pink-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-white font-mono text-[11px] sm:text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 shadow-sm shrink-0"
               title="Generate 5 new candidate names (Shortcut: R)"
             >
               <span>↻ REGENERATE</span>

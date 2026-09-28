@@ -67,6 +67,96 @@ SSL:        DNS Verified (Google DoH)`
     setTimeout(() => setCopiedSpec(false), 2000)
   }
 
+  const exportSvgCard = () => {
+    if (soundFX) soundFX.playKeyThud()
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f2eb"/>
+      <stop offset="100%" stop-color="#e5e0d4"/>
+    </linearGradient>
+    <linearGradient id="squircleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141312"/>
+      <stop offset="50%" stop-color="#2a2622"/>
+      <stop offset="100%" stop-color="#ff2a85"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1000" height="600" fill="url(#bgGrad)" />
+  <g stroke="#d5d0c4" stroke-width="1" opacity="0.4">
+    <line x1="50" y1="50" x2="950" y2="50" stroke-dasharray="4 8"/>
+    <line x1="50" y1="550" x2="950" y2="550" stroke-dasharray="4 8"/>
+    <line x1="500" y1="50" x2="500" y2="550" stroke-dasharray="4 8"/>
+  </g>
+
+  <!-- Left: 512px App Squircle Presentation -->
+  <g transform="translate(100, 100)">
+    <rect width="320" height="400" rx="24" fill="#ffffff" filter="url(#shadow)" stroke="#dcd7cc" stroke-width="1"/>
+    
+    <g transform="translate(80, 50)">
+      <rect width="160" height="160" rx="36" fill="url(#squircleGrad)" filter="url(#shadow)"/>
+      <text x="80" y="98" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="2">${initials}</text>
+      <rect x="65" y="115" width="30" height="4" rx="2" fill="#ff2a85"/>
+    </g>
+
+    <text x="160" y="260" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="22" fill="#181715" text-anchor="middle">${brandName}</text>
+    <text x="160" y="285" font-family="monospace" font-weight="700" font-size="11" fill="#888275" text-anchor="middle" letter-spacing="2">APP MONOGRAM // RETINA</text>
+    <text x="160" y="315" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="14" fill="#f59e0b" text-anchor="middle">★★★★★ 5.0</text>
+    
+    <rect x="110" y="340" width="100" height="28" rx="14" fill="#181715"/>
+    <text x="160" y="358" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="11" fill="#ffffff" text-anchor="middle" letter-spacing="1">GET</text>
+  </g>
+
+  <!-- Right: Thermal Courier Shipping Label Presentation -->
+  <g transform="translate(480, 100)">
+    <rect width="420" height="400" rx="20" fill="#fdfbf7" filter="url(#shadow)" stroke="#333333" stroke-width="2" stroke-dasharray="6 4"/>
+    
+    <rect x="24" y="24" width="372" height="42" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    <text x="36" y="50" font-family="monospace" font-weight="900" font-size="16" fill="#000000">GM-EXPRESS</text>
+    <rect x="160" y="33" width="70" height="20" rx="4" fill="#000000"/>
+    <text x="195" y="47" font-family="monospace" font-weight="800" font-size="10" fill="#ffffff" text-anchor="middle">PRIORITY</text>
+    <text x="384" y="50" font-family="monospace" font-weight="800" font-size="11" fill="#000000" text-anchor="end">SFO / 94107</text>
+
+    <text x="24" y="100" font-family="monospace" font-weight="700" font-size="10" fill="#888275">CONSIGNEE IDENTIFIER:</text>
+    <text x="24" y="128" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#000000">${brandName.toUpperCase()} CORP.</text>
+    <text x="24" y="154" font-family="monospace" font-weight="700" font-size="13" fill="#2563eb">URI: https://${fullDomain}</text>
+    <text x="24" y="176" font-family="monospace" font-weight="600" font-size="11" fill="#666666">PHONETICS: ${phonetics.syllables} SYLLABLES // ${phonetics.tone.toUpperCase()}</text>
+    <text x="24" y="196" font-family="monospace" font-weight="600" font-size="11" fill="#666666">CATEGORY: ${(card.rationale?.trait || 'Digital Platform').toUpperCase()}</text>
+
+    <g transform="translate(24, 220)">
+      <line x1="0" y1="0" x2="372" y2="0" stroke="#000000" stroke-width="1"/>
+      <g transform="translate(10, 15)">
+        ${Array.from({ length: 44 })
+          .map((_, i) => `<rect x="${i * 8}" y="0" width="${(i % 3 === 0 || i % 7 === 0) ? 5 : 2}" height="48" fill="#000000" opacity="${(i % 5 === 0) ? 0.4 : 1}"/>`)
+          .join('')}
+      </g>
+      <text x="186" y="80" font-family="monospace" font-weight="700" font-size="11" fill="#444444" text-anchor="middle" letter-spacing="4">* GM-${domainSlug.toUpperCase().substring(0, 6)}-${phonetics.syllables}09 *</text>
+    </g>
+
+    <line x1="24" y1="330" x2="396" y2="330" stroke="#cccccc" stroke-width="1"/>
+    <text x="24" y="358" font-family="monospace" font-weight="600" font-size="10" fill="#888275">ORIGIN: GOMUMMY SYSTEM V1</text>
+    <text x="396" y="358" font-family="monospace" font-weight="900" font-size="10" fill="#000000" text-anchor="end">ICANN VERIFIED // DOH</text>
+  </g>
+
+  <text x="50" y="35" font-family="monospace" font-weight="800" font-size="11" fill="#888275" letter-spacing="2">👾 GOMUMMY // REAL-WORLD IDENTITY SPECIFICATION CARD</text>
+  <text x="950" y="35" font-family="monospace" font-weight="800" font-size="11" fill="#888275" text-anchor="end">${fullDomain.toUpperCase()}</text>
+</svg>`
+
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `gomummy_${domainSlug}_identity_card.svg`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <>
       {/* 1. Ambient Backdrop (Click to Disengage) */}
@@ -125,6 +215,16 @@ SSL:        DNS Verified (Google DoH)`
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={exportSvgCard}
+                  className="tactile-chiclet px-3.5 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs flex items-center gap-1.5 hover:border-black"
+                  title="Download vector identity specification card (SVG)"
+                >
+                  <span>📥</span>
+                  <span>EXPORT SVG</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={copySpec}

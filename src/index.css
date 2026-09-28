@@ -645,4 +645,14 @@ body { margin: 0; background: #f1efea; }
     0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
+/* TOUCH-FRIENDLY NO-SCROLLBAR UTILITY */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
 

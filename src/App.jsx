@@ -518,11 +518,16 @@ export default function App() {
       )}
 
       {questionsOpen && (
-        <QuestionsPanel answers={answers} onSave={saveAnswer} onClose={() => setQuestionsOpen(false)} />
+        <QuestionsPanel
+          answers={answers}
+          onSave={saveAnswer}
+          onClose={() => setQuestionsOpen(false)}
+          soundFX={soundFX}
+        />
       )}
 
       {/* Persistent Docked Hardware Quick Latch Bar (when trays are closed and items exist) */}
-      {!compareModalOpen && !shortlistModalOpen && (shortlist.length > 0 || compareSel.length > 0) && (
+      {!compareModalOpen && !shortlistModalOpen && !viewfinderCard && !questionsOpen && (shortlist.length > 0 || compareSel.length > 0) && (
         <div className="fixed bottom-4 right-4 sm:right-8 z-40 flex items-center gap-2 font-mono hardware-tray-slide-up">
           {shortlist.length > 0 && (
             <button
