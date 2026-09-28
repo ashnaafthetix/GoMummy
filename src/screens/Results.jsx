@@ -34,6 +34,7 @@ export default function Results({
   onRewindBatch,
   onForwardBatch,
   onOpenViewfinder,
+  onOpenWhois,
 }) {
   const [copiedDomain, setCopiedDomain] = useState(null)
   const [activeTldFilter, setActiveTldFilter] = useState('all')
@@ -200,6 +201,7 @@ export default function Results({
           isCompared={compareSel.some((c) => c.domain === targetCard?.domain)}
           soundFX={soundFX}
           onOpenViewfinder={onOpenViewfinder}
+          onOpenWhois={onOpenWhois}
         />
 
         {/* JOB 02: Modular Industrial Instrument Cards Grid */}
@@ -230,6 +232,7 @@ export default function Results({
                 onCopy={copy}
                 soundFX={soundFX}
                 onOpenViewfinder={onOpenViewfinder}
+                onOpenWhois={onOpenWhois}
               />
             )
           })}

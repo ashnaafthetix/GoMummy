@@ -13,6 +13,7 @@ import ResultsPreviewGallery from './components/results-dirs/ResultsPreviewGalle
 import ArcadeLab from './screens/ArcadeLab.jsx'
 import CompareModal from './components/modals/CompareModal.jsx'
 import ShortlistModal from './components/modals/ShortlistModal.jsx'
+import WhoisDiagnosticModal from './components/modals/WhoisDiagnosticModal.jsx'
 import TerminalFrame from './components/terminal/TerminalFrame.jsx'
 import IdentityViewfinder from './components/hardware/IdentityViewfinder.jsx'
 
@@ -69,10 +70,11 @@ export default function App() {
   const [lockedSlots, setLockedSlots] = useState(new Set())
   const isSearchingRef = useRef(false)
 
-  // Modal overlays for Compare & Shortlist
+  // Modal overlays for Compare & Shortlist & WHOIS
   const [compareModalOpen, setCompareModalOpen] = useState(false)
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false)
   const [viewfinderCard, setViewfinderCard] = useState(null)
+  const [whoisDomain, setWhoisDomain] = useState(null)
 
   // Celebrate on rank advancement with guaranteed auto-dismiss timer
   useEffect(() => {
@@ -489,6 +491,7 @@ export default function App() {
           onRewindBatch={handleRewindBatch}
           onForwardBatch={handleForwardBatch}
           onOpenViewfinder={setViewfinderCard}
+          onOpenWhois={(dom) => setWhoisDomain(dom)}
         />
       )}
       {view === 'retro-previews' && (
@@ -531,6 +534,15 @@ export default function App() {
           onClose={() => setViewfinderCard(null)}
           onToggleShortlist={toggleShortlist}
           isShortlisted={shortlist.some((s) => s.domain === viewfinderCard.domain)}
+          soundFX={soundFX}
+        />
+      )}
+
+      {/* Technical WHOIS & DNS Diagnostic Tray */}
+      {whoisDomain && (
+        <WhoisDiagnosticModal
+          domain={whoisDomain}
+          onClose={() => setWhoisDomain(null)}
           soundFX={soundFX}
         />
       )}

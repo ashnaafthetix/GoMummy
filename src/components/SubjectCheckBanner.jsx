@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { getDomainPrice, analyzePhonetics, generateSmartAffixes } from '../services/domainService.js'
+import { getDomainPrice, analyzePhonetics, generateSmartAffixes, getPrimaryRegistrarUrl } from '../services/domainService.js'
 import TorxScrew from './hardware/TorxScrew.jsx'
 import PhotorealLED from './hardware/PhotorealLED.jsx'
 import SocialBeaconStrip from './hardware/SocialBeaconStrip.jsx'
@@ -16,6 +16,7 @@ export default function SubjectCheckBanner({
   isCompared = false,
   soundFX,
   onOpenViewfinder,
+  onOpenWhois,
 }) {
   if (!brief?.name || !targetCard) return null
 
@@ -61,8 +62,16 @@ export default function SubjectCheckBanner({
   }
 
   const handleRegisterClick = () => {
+    if (!isAvail && onOpenWhois) {
+      if (soundFX) soundFX.playLock()
+      onOpenWhois(fullDomain)
+      return
+    }
     if (soundFX) soundFX.playAvailable()
-    alert(`Redirecting to registrar to claim ${fullDomain} ($${priceInfo.reg}/yr)...`)
+    const targetUrl = getPrimaryRegistrarUrl(fullDomain)
+    if (typeof window !== 'undefined') {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    }
   }
 
   return (
@@ -117,14 +126,23 @@ export default function SubjectCheckBanner({
 
           {/* Full domain with LED Beacon & Pricing */}
           <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-mono">
-            <div className="flex items-center gap-2.5 bg-white px-3.5 py-1.5 rounded-lg border border-[#cfc9be] shadow-2xs">
+            <div
+              onClick={!isAvail && onOpenWhois ? () => {
+                if (soundFX) soundFX.playLock()
+                onOpenWhois(fullDomain)
+              } : undefined}
+              className={`flex items-center gap-2.5 bg-white px-3.5 py-1.5 rounded-lg border border-[#cfc9be] shadow-2xs transition-colors ${
+                !isAvail ? 'cursor-pointer hover:border-black' : ''
+              }`}
+              title={!isAvail ? 'Click to inspect WHOIS/DNS Telemetry Diagnostic' : undefined}
+            >
               <span className="font-bold text-neutral-900">{fullDomain}</span>
               <PhotorealLED
                 status={isChecking ? 'checking' : isAvail ? 'available' : 'registered'}
                 size={10}
               />
               <span
-                className={`font-black uppercase text-[11px] ${
+                className={`font-black uppercase text-[11px] flex items-center gap-1 ${
                   isChecking
                     ? 'text-amber-600'
                     : isAvail
@@ -132,7 +150,8 @@ export default function SubjectCheckBanner({
                     : 'text-neutral-500'
                 }`}
               >
-                {isChecking ? 'Checking DNS...' : isAvail ? 'AVAILABLE' : 'TAKEN / REGISTERED'}
+                <span>{isChecking ? 'Checking DNS...' : isAvail ? 'AVAILABLE' : 'TAKEN / REGISTERED'}</span>
+                {!isAvail && <span className="text-[10px]">🔍</span>}
               </span>
             </div>
 
@@ -240,9 +259,17 @@ export default function SubjectCheckBanner({
           <button
             type="button"
             onClick={handleRegisterClick}
-            className="tactile-pink-btn w-full py-3 px-4 rounded-xl text-white font-mono text-xs font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+            className={`${
+              isAvail
+                ? 'tactile-pink-btn text-white'
+                : 'bg-neutral-900 hover:bg-black text-white border border-neutral-800'
+            } w-full py-3 px-4 rounded-xl font-mono text-xs font-black tracking-wider cursor-pointer flex items-center justify-center gap-2 shadow-sm transition-all`}
           >
-            <span>REGISTER {fullDomain.toUpperCase()} ➔ ${priceInfo.reg}</span>
+            <span>
+              {isAvail
+                ? `REGISTER ${fullDomain.toUpperCase()} ➔ $${priceInfo.reg}`
+                : `WHOIS & DNS TELEMETRY DIAGNOSTIC 🔍`}
+            </span>
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { getDomainPrice, generateSmartAffixes, analyzePhonetics } from '../services/domainService.js'
+import { getDomainPrice, generateSmartAffixes, analyzePhonetics, getPrimaryRegistrarUrl } from '../services/domainService.js'
 import TorxScrew from './hardware/TorxScrew.jsx'
 import PhotorealLED from './hardware/PhotorealLED.jsx'
 import SocialBeaconStrip from './hardware/SocialBeaconStrip.jsx'
@@ -23,6 +23,7 @@ export default function ResultCard({
   onToggleLock,
   soundFX,
   onOpenViewfinder,
+  onOpenWhois,
   category,
   rationale,
 }) {
@@ -123,8 +124,16 @@ export default function ResultCard({
 
   const handleRegisterClick = (e) => {
     e.stopPropagation()
+    if (!isAvail && onOpenWhois) {
+      if (soundFX) soundFX.playLock()
+      onOpenWhois(fullDomain)
+      return
+    }
     if (soundFX) soundFX.playAvailable()
-    alert(`Redirecting to ${priceInfo.registrar} to register ${fullDomain} ($${priceInfo.reg}/yr)...`)
+    const targetUrl = getPrimaryRegistrarUrl(fullDomain)
+    if (typeof window !== 'undefined') {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    }
   }
 
   const handleCopyClick = (e) => {
@@ -311,17 +320,25 @@ export default function ResultCard({
             <span className="font-bold text-neutral-900 text-sm tracking-tight">
               {activeSlug}{selectedTld}
             </span>
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
+            <button
+              type="button"
+              onClick={!isAvail ? (e) => {
+                e.stopPropagation()
+                if (soundFX) soundFX.playLock()
+                if (onOpenWhois) onOpenWhois(fullDomain)
+              } : undefined}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase transition-all flex items-center gap-1 ${
                 isChecking
                   ? 'bg-amber-100 text-amber-800 border border-amber-300'
                   : isAvail
                   ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                  : 'bg-neutral-200 text-neutral-600'
+                  : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 hover:text-black cursor-pointer border border-neutral-300'
               }`}
+              title={!isAvail ? 'Inspect WHOIS and live DNS telemetry' : 'Domain is free to register'}
             >
-              {isChecking ? 'Checking...' : isAvail ? 'Available' : 'Registered'}
-            </span>
+              <span>{isChecking ? 'Checking...' : isAvail ? 'Available' : 'Registered'}</span>
+              {!isAvail && <span className="text-[9px] text-neutral-500">🔍</span>}
+            </button>
           </div>
 
           <div className="text-right">
@@ -417,10 +434,14 @@ export default function ResultCard({
         <button
           type="button"
           onClick={handleRegisterClick}
-          className="tactile-pink-btn px-5 py-2 text-white font-mono text-xs font-black rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm"
+          className={`${
+            isAvail
+              ? 'tactile-pink-btn text-white'
+              : 'bg-neutral-900 hover:bg-black text-white border border-neutral-800'
+          } px-4 sm:px-5 py-2 font-mono text-xs font-black rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm transition-all`}
         >
-          <span>BUY DOMAIN</span>
-          <span className="text-[11px]">➔</span>
+          <span>{isAvail ? 'BUY DOMAIN' : 'WHOIS INTEL'}</span>
+          <span className="text-[11px]">{isAvail ? '➔' : '🔍'}</span>
         </button>
       </div>
     </div>
