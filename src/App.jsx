@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Brief from './screens/Brief.jsx'
+import TactileBriefConsole from './screens/TactileBriefConsole.jsx'
 import Results from './screens/Results.jsx'
 import Shortlist from './screens/Shortlist.jsx'
 import Compare from './screens/Compare.jsx'
@@ -12,6 +13,7 @@ import ResultsPreviewGallery from './components/results-dirs/ResultsPreviewGalle
 import ArcadeLab from './screens/ArcadeLab.jsx'
 import CompareModal from './components/modals/CompareModal.jsx'
 import ShortlistModal from './components/modals/ShortlistModal.jsx'
+import TerminalFrame from './components/terminal/TerminalFrame.jsx'
 
 import { generateGeminiBrandNames, getGeminiKey } from './services/geminiService.js'
 import { checkDomainAvailability, checkDomainsBatch } from './services/domainService.js'
@@ -40,6 +42,7 @@ export default function App() {
     return 'brief'
   })
   const [questionsOpen, setQuestionsOpen] = useState(false)
+  const [briefStep, setBriefStep] = useState('input') // 'input' | 'flavor'
 
   const [brief, setBrief] = useState(INITIAL_BRIEF)
   const [targetCard, setTargetCard] = useState(() => getTargetCard(CANDIDATE_POOL, INITIAL_BRIEF))
@@ -85,6 +88,18 @@ export default function App() {
     setSoundMuted(next)
     if (!next) soundFX.playCoin()
   }
+
+  // Ambient soft retro chirp loop - activates when sound is enabled
+  useEffect(() => {
+    if (!soundMuted) {
+      soundFX.startAmbientLoop()
+    } else {
+      soundFX.stopAmbientLoop()
+    }
+    return () => {
+      soundFX.stopAmbientLoop()
+    }
+  }, [soundMuted])
 
   const addXp = (amount) => {
     setXp((prev) => Math.max(0, prev + amount))
@@ -317,145 +332,41 @@ export default function App() {
   const skipFollowUp = () => setPendingQuestion(null)
 
   return (
-    <div className="min-h-full bg-canvas">
-      {/* GLOBAL TOP NAVIGATION */}
-      <nav className="flex items-center justify-between border-b-2 border-black bg-white px-4 sm:px-6 py-3 font-meta text-[12px] shadow-[0_2px_0px_0px_#000]">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <button
-            type="button"
-            onClick={() => setView('brief')}
-            className="font-pixel text-[13px] tracking-tight text-ink hover:text-[#ff2a8d] transition-colors cursor-pointer"
-          >
-            GOMUMMY
-          </button>
-          <div className="flex flex-wrap gap-2 sm:gap-2.5 items-center">
-            {/* 01 BRIEF */}
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                setView('brief')
-                setCompareModalOpen(false)
-                setShortlistModalOpen(false)
-              }}
-              className={`font-pixel text-[10px] sm:text-[11px] px-3 py-1 border-2 transition-all pixel-btn cursor-pointer ${
-                view === 'brief' && !compareModalOpen && !shortlistModalOpen
-                  ? 'bg-[#ff2a8d] text-white border-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-[#faf8f5] text-black border-black hover:bg-black hover:text-white'
-              }`}
-            >
-              01 BRIEF
-            </button>
-
-            {/* 02 RESULTS */}
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                setView('results')
-                setCompareModalOpen(false)
-                setShortlistModalOpen(false)
-              }}
-              className={`font-pixel text-[10px] sm:text-[11px] px-3 py-1 border-2 transition-all pixel-btn cursor-pointer ${
-                view === 'results' && !compareModalOpen && !shortlistModalOpen
-                  ? 'bg-[#ff2a8d] text-white border-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-[#faf8f5] text-black border-black hover:bg-black hover:text-white'
-              }`}
-            >
-              02 RESULTS
-            </button>
-
-            {/* SHORTLIST (POP-UP MODAL) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                setShortlistModalOpen(true)
-              }}
-              className={`font-pixel text-[10px] sm:text-[11px] px-3 py-1 border-2 transition-all pixel-btn cursor-pointer flex items-center gap-1.5 ${
-                shortlistModalOpen
-                  ? 'bg-[#ff2a8d] text-white border-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-[#faf8f5] text-black border-black hover:bg-black hover:text-white'
-              }`}
-            >
-              <span>★ SHORTLIST</span>
-              {shortlist.length > 0 && (
-                <span className={`px-1.5 py-0.2 text-[9px] font-bold ${shortlistModalOpen ? 'bg-black text-white' : 'bg-[#ff2a8d] text-white'}`}>
-                  {shortlist.length}
-                </span>
-              )}
-            </button>
-
-            {/* COMPARE (POP-UP MODAL) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                setCompareModalOpen(true)
-              }}
-              className={`font-pixel text-[10px] sm:text-[11px] px-3 py-1 border-2 transition-all pixel-btn cursor-pointer flex items-center gap-1.5 ${
-                compareModalOpen
-                  ? 'bg-[#ff2a8d] text-white border-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-[#faf8f5] text-black border-black hover:bg-black hover:text-white'
-              }`}
-            >
-              <span>VS COMPARE</span>
-              {compareSel.length > 0 && (
-                <span className={`px-1.5 py-0.2 text-[9px] font-bold ${compareModalOpen ? 'bg-black text-white' : 'bg-black text-white'}`}>
-                  {compareSel.length}/2
-                </span>
-              )}
-            </button>
-
-            {/* QUESTIONS PANEL */}
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                setQuestionsOpen(true)
-              }}
-              className={`font-pixel text-[10px] sm:text-[11px] px-3 py-1 border-2 transition-all pixel-btn cursor-pointer flex items-center gap-1.5 ${
-                questionsOpen
-                  ? 'bg-[#ff2a8d] text-white border-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-[#faf8f5] text-black border-black hover:bg-black hover:text-white'
-              }`}
-            >
-              <span>? QUESTIONS</span>
-              {Object.keys(answers).length > 0 && (
-                <span className="bg-black text-white px-1.5 py-0.2 text-[9px] font-bold">
-                  {Object.keys(answers).length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Global Controls & Gamified Hunter Stats Badge */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Global Sound FX Toggle */}
-          <button
-            type="button"
-            onClick={toggleSound}
-            title={soundMuted ? 'Turn Sound ON' : 'Mute Sound'}
-            className={`flex items-center gap-1 border-2 border-black px-2.5 py-1 font-pixel text-[10px] transition-all pixel-btn cursor-pointer ${
-              soundMuted ? 'bg-[#cac4d0] text-[#737373]' : 'bg-[#22c55e] text-black font-bold'
-            }`}
-          >
-            <span>{soundMuted ? '🔇 SFX: OFF' : '🔊 SFX: ON'}</span>
-          </button>
-
-          {/* Hunter Stats Meter */}
-          <div className="hidden md:flex items-center gap-1.5 border-2 border-black bg-[#faf8f5] px-2.5 py-1 font-pixel text-[10px] shadow-[2px_2px_0px_0px_#000]">
-            <span className="text-[#ff2a8d]">RANK:</span>
-            <span className="bg-black text-white px-1.5 py-0.5">{hunterRank.title}</span>
-            <span className="bg-[#ff2a8d] text-white px-1.5 py-0.5">★ {xp} XP</span>
-            <span className="bg-white text-black border border-black px-1 py-0.5 font-mono text-[10px] font-bold">
-              ROLL #{generation}
-            </span>
-          </div>
-        </div>
-      </nav>
-
+    <TerminalFrame
+      currentView={view}
+      onViewChange={(newView) => {
+        if (soundFX) soundFX.playLock()
+        setView(newView)
+        setCompareModalOpen(false)
+        setShortlistModalOpen(false)
+        if (newView === 'brief') setBriefStep('input')
+      }}
+      soundMuted={soundMuted}
+      onToggleSound={toggleSound}
+      hunterRank={hunterRank}
+      xp={xp}
+      shortlistCount={shortlist.length}
+      compareCount={compareSel.length}
+      questionsCount={Object.keys(answers).length}
+      onOpenShortlist={() => {
+        if (soundFX) soundFX.playLock()
+        setShortlistModalOpen(true)
+      }}
+      onOpenCompare={() => {
+        if (soundFX) soundFX.playLock()
+        setCompareModalOpen(true)
+      }}
+      onOpenQuestions={() => {
+        if (soundFX) soundFX.playLock()
+        setQuestionsOpen(true)
+      }}
+      briefStep={briefStep}
+      onBriefStepChange={setBriefStep}
+      onFindNames={() => findNames(brief)}
+      onRegenerate={regenerate}
+      canSubmit={Boolean(brief.name?.trim() || brief.description?.trim())}
+      isSearching={isSearchingRef.current}
+    >
       {view === 'results-previews' && (
         <ResultsPreviewGallery
           brief={brief}
@@ -474,7 +385,7 @@ export default function App() {
       )}
 
       {view === 'brief' && (
-        <Brief
+        <TactileBriefConsole
           initial={brief}
           onFindNames={findNames}
           onOpenQuestions={() => setQuestionsOpen(true)}
@@ -547,6 +458,6 @@ export default function App() {
       {questionsOpen && (
         <QuestionsPanel answers={answers} onSave={saveAnswer} onClose={() => setQuestionsOpen(false)} />
       )}
-    </div>
+    </TerminalFrame>
   )
 }

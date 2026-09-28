@@ -5,6 +5,8 @@
   --font-meta: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-pixel: "Silkscreen", monospace;
   --font-mono: "Space Mono", monospace;
+  --font-terminal: "VT323", monospace;
+  --font-arcade: "Press Start 2P", monospace;
 
   /* Seeded from the S3 result card (Prompt 1) */
   --color-ink: #0a0a0a;
@@ -261,6 +263,288 @@
   animation: popupSpring 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
 
+/* 3D MECHANICAL ARCADE PUSH BUTTONS */
+.arcade-btn-pink {
+  position: relative;
+  background-color: #ff2a8d;
+  color: #ffffff;
+  border: 3px solid #000000;
+  box-shadow: 0 4px 0 0 #000000, 0 6px 0 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.08s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.15s ease;
+  user-select: none;
+}
+.arcade-btn-pink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 0 #000000, 0 8px 12px rgba(255, 42, 141, 0.35);
+  filter: brightness(1.06);
+}
+.arcade-btn-pink:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 #000000;
+  filter: brightness(0.95);
+}
+
+.arcade-btn-white {
+  position: relative;
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 0 3px 0 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease;
+  user-select: none;
+}
+.arcade-btn-white:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 0 #000000;
+  background-color: #faf8f5;
+}
+.arcade-btn-white:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #000000;
+}
+
+/* KEYCAP TAB BUTTONS (TOP HUD) */
+.arcade-keycap {
+  border: 2px solid #000000;
+  box-shadow: 0 3px 0 0 #000000;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.arcade-keycap:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 0 #000000;
+}
+.arcade-keycap:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #000000;
+}
+
+/* CLOUD DRIFT MOTION */
+@keyframes cloudDriftSlow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+  100% { transform: translateX(0); }
+}
+@keyframes cloudDriftFast {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-24px); }
+  100% { transform: translateX(0); }
+}
+.animate-cloud-slow {
+  animation: cloudDriftSlow 12s infinite ease-in-out;
+}
+.animate-cloud-fast {
+  animation: cloudDriftFast 9s infinite ease-in-out;
+}
+
+/* FLOATING ALIEN SPRITE MOTION */
+@keyframes floatAlien {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(4px) rotate(2deg);
+  }
+}
+.animate-float-alien {
+  animation: floatAlien 3.5s infinite ease-in-out;
+}
+
+/* CRT SCREEN CURVATURE & VIGNETTE */
+.crt-screen-container {
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.12), 0 0 0 4px #1a1a1a;
+  border-radius: 12px;
+  position: relative;
+}
+
+/* COZY WORKSHOP / DESK AMBIANCE */
+.workshop-bg {
+  background: 
+    radial-gradient(ellipse 90% 70% at 15% 20%, rgba(255, 240, 210, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 85% 80%, rgba(255, 112, 179, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #ede8dc 0%, #dfd7c5 45%, #c8bda6 100%);
+}
+
+/* LED BLINKING / STEADY GLOWS */
+@keyframes ledBlink {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px #22c55e); }
+  50% { opacity: 0.35; filter: none; }
+}
+.animate-led-blink {
+  animation: ledBlink 1.8s infinite ease-in-out;
+}
+
+@keyframes ledPinkBlink {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 5px #ff2a8d); }
+  40% { opacity: 0.25; filter: none; }
+}
+.animate-led-pink {
+  animation: ledPinkBlink 2.4s infinite ease-in-out;
+}
+
+/* Custom retro arcade scrollbar */
+.custom-retro-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-retro-scroll::-webkit-scrollbar-track {
+  background: #1f1d1a;
+}
+.custom-retro-scroll::-webkit-scrollbar-thumb {
+  background: #ff2a8d;
+  border-radius: 0px;
+}
+.custom-retro-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ff70b3;
+}
+
 html, body, #root { height: 100%; }
-body { margin: 0; background: var(--color-canvas); }
+body { margin: 0; background: #f1efea; }
+
+/* RETRO-FUTURISTIC INDUSTRIAL WORKSTATION (BENCHMARK STYLES) */
+.blueprint-cross-grid {
+  background-color: #f2efe9;
+  background-image: 
+    radial-gradient(#b8b5ad 1.4px, transparent 1.4px),
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.hardware-chassis-shell {
+  background: linear-gradient(180deg, #f7f5f1 0%, #ece8e1 100%);
+  border: 2.5px solid #d4cfc6;
+  box-shadow: 
+    0 1px 0 1px rgba(255, 255, 255, 0.85) inset,
+    0 -1px 0 1px rgba(0, 0, 0, 0.06) inset,
+    0 24px 50px -10px rgba(0, 0, 0, 0.16),
+    0 12px 24px -5px rgba(0, 0, 0, 0.1);
+}
+
+.hardware-inset-panel {
+  background: #ffffff;
+  border: 1.5px solid #dcd7ce;
+  box-shadow: 
+    inset 0 3px 6px rgba(0, 0, 0, 0.07),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.hardware-subpanel-bay {
+  background: #f7f5f1;
+  border: 1.5px solid #dbd6cc;
+  border-radius: 14px;
+}
+
+/* TACTILE 3D PUSH BUTTONS */
+.tactile-pink-btn {
+  background: linear-gradient(180deg, #ff3b94 0%, #ff2079 100%);
+  border: 1.5px solid #d90f61;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 4px 0 0 #b3004b,
+    0 6px 14px rgba(255, 32, 121, 0.35);
+  transition: transform 0.07s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.07s cubic-bezier(0.2, 0, 0, 1);
+}
+.tactile-pink-btn:hover {
+  filter: brightness(1.05);
+}
+.tactile-pink-btn:active {
+  transform: translateY(3px);
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 1px 0 0 #b3004b,
+    0 2px 6px rgba(255, 32, 121, 0.25);
+}
+
+/* TACTILE CHICLET KEYCAP */
+.tactile-chiclet {
+  background: linear-gradient(180deg, #ffffff 0%, #f0eee8 100%);
+  border: 1.5px solid #d0cbc1;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 3px 0 0 #b8b2a5,
+    0 4px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.tactile-chiclet:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #f7f5ef 100%);
+}
+.tactile-chiclet:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 1px 0 0 #b8b2a5,
+    0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.tactile-chiclet-active {
+  background: linear-gradient(180deg, #ff3b94 0%, #ff2079 100%) !important;
+  border-color: #d90f61 !important;
+  color: #ffffff !important;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 3px 0 0 #b3004b,
+    0 4px 10px rgba(255, 32, 121, 0.3) !important;
+}
+
+/* SPUN ALUMINUM RADIAL KNOB */
+.spun-aluminum-knob {
+  background: 
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, transparent 30%),
+    conic-gradient(
+      from 45deg,
+      #f5f5f5 0deg,
+      #c4c7cc 45deg,
+      #ffffff 90deg,
+      #b0b4b8 135deg,
+      #ffffff 180deg,
+      #c4c7cc 225deg,
+      #ffffff 270deg,
+      #a8acb0 315deg,
+      #f5f5f5 360deg
+    );
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 14px rgba(0, 0, 0, 0.22),
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 0 0 2px #d4cfc7;
+}
+
+/* ILLUMINATED FADER TRACK */
+.fader-slot-track {
+  background: #201e1c;
+  box-shadow: 
+    inset 0 2px 5px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.8);
+  border-radius: 9999px;
+  position: relative;
+}
+
+.fader-glow-fill {
+  background: linear-gradient(180deg, #ff2a85 0%, #d40f5a 100%);
+  box-shadow: 0 0 8px #ff2a85;
+  border-radius: 9999px;
+}
+
+.fader-thumb-silver {
+  background: linear-gradient(180deg, #ffffff 0%, #d9d6d0 50%, #b8b3a8 100%);
+  border: 1px solid #9e998e;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 4px 8px rgba(0, 0, 0, 0.25);
+  border-radius: 5px;
+}
+
+/* BLINKING PINK CURSOR */
+@keyframes pinkCursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-pink-blink {
+  animation: pinkCursorBlink 1s infinite;
+}
+
 

@@ -22,10 +22,81 @@ class RetroAudioEngine {
 
   setMuted(muted) {
     this.isMuted = muted
+    if (muted) {
+      this.stopAmbientLoop()
+    } else {
+      this.init()
+      this.startAmbientLoop()
+    }
   }
 
   getMuted() {
     return this.isMuted
+  }
+
+  // Soothing procedural 8-bit ambient background chirp
+  playSoftChirp() {
+    if (this.isMuted) return
+    this.init()
+    if (!this.ctx) return
+
+    const now = this.ctx.currentTime
+    const baseFreq = 1600 + Math.random() * 500
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(baseFreq, now)
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.08)
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.95, now + 0.16)
+
+    gain.gain.setValueAtTime(0.025, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
+
+    osc.connect(gain)
+    gain.connect(this.ctx.destination)
+
+    osc.start(now)
+    osc.stop(now + 0.22)
+
+    if (Math.random() > 0.4) {
+      setTimeout(() => {
+        if (this.isMuted || !this.ctx) return
+        const echoTime = this.ctx.currentTime
+        const osc2 = this.ctx.createOscillator()
+        const gain2 = this.ctx.createGain()
+        osc2.type = 'triangle'
+        osc2.frequency.setValueAtTime(baseFreq * 1.25, echoTime)
+        osc2.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, echoTime + 0.07)
+        gain2.gain.setValueAtTime(0.018, echoTime)
+        gain2.gain.exponentialRampToValueAtTime(0.001, echoTime + 0.15)
+        osc2.connect(gain2)
+        gain2.connect(this.ctx.destination)
+        osc2.start(echoTime)
+        osc2.stop(echoTime + 0.15)
+      }, 130)
+    }
+  }
+
+  startAmbientLoop() {
+    this.stopAmbientLoop()
+    if (this.isMuted) return
+
+    const scheduleNext = () => {
+      const delay = 7000 + Math.random() * 7000
+      this.ambientTimer = setTimeout(() => {
+        this.playSoftChirp()
+        scheduleNext()
+      }, delay)
+    }
+    scheduleNext()
+  }
+
+  stopAmbientLoop() {
+    if (this.ambientTimer) {
+      clearTimeout(this.ambientTimer)
+      this.ambientTimer = null
+    }
   }
 
   // Rapid slot-machine spin chirp
@@ -208,6 +279,52 @@ class RetroAudioEngine {
       osc.start(now + idx * 0.08)
       osc.stop(now + idx * 0.08 + 0.3)
     })
+  }
+
+  // Soft rotary knob step tick
+  playTick() {
+    if (this.isMuted) return
+    this.init()
+    if (!this.ctx) return
+
+    const now = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(750, now)
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.035)
+
+    gain.gain.setValueAtTime(0.06, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
+
+    osc.connect(gain)
+    gain.connect(this.ctx.destination)
+    osc.start(now)
+    osc.stop(now + 0.035)
+  }
+
+  // Tactile mechanical keycap depression thud
+  playKeyThud() {
+    if (this.isMuted) return
+    this.init()
+    if (!this.ctx) return
+
+    const now = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(180, now)
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.05)
+
+    gain.gain.setValueAtTime(0.12, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
+
+    osc.connect(gain)
+    gain.connect(this.ctx.destination)
+    osc.start(now)
+    osc.stop(now + 0.05)
   }
 }
 

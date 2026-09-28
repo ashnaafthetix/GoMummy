@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { PixelDivider, PixelSparkle, PixelHeart } from '../pixel/PixelElements.jsx'
+import React, { useEffect, useState } from 'react'
+import { getDomainPrice, analyzePhonetics } from '../../services/domainService.js'
 
 export default function ShortlistModal({
   shortlist = [],
@@ -13,7 +13,7 @@ export default function ShortlistModal({
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        if (soundFX) soundFX.playLock()
+        if (soundFX) soundFX.playTick()
         onClose()
       }
     }
@@ -27,170 +27,250 @@ export default function ShortlistModal({
     } catch {
       // fallback
     }
-    if (soundFX) soundFX.playAvailable()
+    if (soundFX) soundFX.playTick()
     setCopiedDomain(domain)
     setTimeout(() => setCopiedDomain(null), 1500)
   }
 
   const copyAll = async () => {
-    const text = shortlist.map((s) => `${s.domain}${s.tld}`).join('\n')
+    const text = shortlist.map((s) => `${s.domain}${s.tld || '.com'}`).join('\n')
     try {
       await navigator.clipboard.writeText(text)
     } catch {
       // fallback
     }
-    if (soundFX) soundFX.playCoin()
+    if (soundFX) soundFX.playKeyThud()
     setCopiedAll(true)
     setTimeout(() => setCopiedAll(false), 2000)
   }
 
-  const handleRemove = (item) => {
-    if (soundFX) soundFX.playUnlock()
-    onRemove(item)
+  const exportCsv = () => {
+    if (soundFX) soundFX.playKeyThud()
+    const rows = [
+      ['Name', 'Domain', 'TLD', 'Year 1 Reg ($)', 'Renewal/yr ($)', 'Syllables', 'Tone'],
+      ...shortlist.map((s) => {
+        const p = getDomainPrice(s.tld || '.com')
+        const ph = analyzePhonetics(s.name || s.domain)
+        return [
+          s.name || s.domain,
+          `${s.domain}${s.tld || '.com'}`,
+          s.tld || '.com',
+          p.reg,
+          p.renew,
+          ph.syllables,
+          ph.tone,
+        ]
+      }),
+    ]
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', 'gomummy_saved_domains.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
+
+  const totalYr1 = shortlist.reduce((sum, item) => {
+    const p = getDomainPrice(item.tld || '.com')
+    return sum + p.reg
+  }, 0)
+
+  const totalRenew = shortlist.reduce((sum, item) => {
+    const p = getDomainPrice(item.tld || '.com')
+    return sum + p.renew
+  }, 0)
 
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto font-mono"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[940px] my-auto border-4 border-black bg-[#faf8f5] p-6 sm:p-8 pixel-shadow-pink animate-popup-spring"
+        className="hardware-chassis-shell relative w-full max-w-[1020px] my-auto rounded-[28px] p-6 sm:p-8 shadow-2xl text-neutral-800"
       >
-        {/* Modal Top Strip */}
-        <div className="flex flex-wrap items-center justify-between border-b-2 border-black pb-3 mb-6 gap-3">
-          <div className="flex items-center gap-2.5">
-            <PixelSparkle className="size-6 text-[#ff2a8d] animate-spin" />
-            <span className="bg-[#ff2a8d] text-white px-2.5 py-0.5 font-pixel text-[11px]">
-              SAVED SHORTLIST
+        {/* Corner Hex Screws */}
+        <span className="absolute left-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
+        <span className="absolute right-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
+        <span className="absolute left-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
+        <span className="absolute right-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
+
+        {/* Modal Header */}
+        <div className="flex flex-wrap items-center justify-between pb-3 mb-6 border-b border-[#dbd6cc] gap-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 bg-amber-400 text-black text-xs font-black rounded">
+              ⭐ PORTFOLIO LEDGER
             </span>
-            <span className="bg-black text-white px-2 py-0.5 font-pixel text-[10px]">
-              ★ {shortlist.length} NAMES SAVED
+            <span className="font-display font-black text-lg text-neutral-900 tracking-tight">
+              SAVED DOMAINS &amp; VALUATION
+            </span>
+            <span className="px-2 py-0.5 bg-black text-white text-[10px] font-bold rounded">
+              {shortlist.length} ASSETS
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {shortlist.length > 0 && (
-              <button
-                type="button"
-                onClick={copyAll}
-                className={`border-2 border-black px-3.5 py-1 font-mono text-[11px] font-bold transition-all pixel-btn cursor-pointer ${
-                  copiedAll ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
-                }`}
-              >
-                {copiedAll ? `COPIED ALL (${shortlist.length})! ✓` : `COPY ALL (${shortlist.length})`}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                if (soundFX) soundFX.playLock()
-                onClose()
-              }}
-              className="flex items-center gap-1.5 border-2 border-black bg-white px-3 py-1 font-pixel text-[10px] hover:bg-black hover:text-white transition-colors pixel-btn cursor-pointer"
-            >
-              <span>[✕ CLOSE]</span>
-              <span className="text-[#737373]">[ESC]</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="tactile-chiclet p-1.5 px-3 rounded-lg text-xs font-bold text-neutral-600 hover:text-black transition-colors cursor-pointer"
+          >
+            ✕ CLOSE
+          </button>
         </div>
 
-        {/* Modal Main Content */}
         {shortlist.length === 0 ? (
-          <div className="border-3 border-dashed border-black bg-white p-10 text-center space-y-4">
-            <div className="inline-block p-3 border-2 border-black bg-[#faf8f5] animate-bounce">
-              <PixelHeart className="size-8 text-[#ff2a8d]" />
-            </div>
-            <h3 className="font-pixel text-[18px] text-black">NO CANDIDATES SHORTLISTED YET</h3>
-            <p className="font-mono text-[12px] text-[#737373] max-w-[440px] mx-auto">
-              Save on-brand names from the results screen by clicking <span className="text-[#ff2a8d] font-bold">[SHORTLIST ★]</span>. Each saved name awards <span className="text-[#22c55e] font-bold">+10 XP</span> toward your Hunter Rank.
+          <div className="py-12 text-center text-neutral-500">
+            <div className="text-3xl mb-2">⭐</div>
+            <p className="font-bold text-sm">YOUR SHORTLIST IS CURRENTLY EMPTY</p>
+            <p className="text-xs text-neutral-400 mt-1">
+              Click the ★ icon on any domain card to add it to your portfolio ledger.
             </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="border-2 border-black bg-[#ff2a8d] px-6 py-2.5 font-pixel text-[11px] text-white pixel-btn-pink cursor-pointer"
-            >
-              RETURN TO RESULTS FEED →
-            </button>
           </div>
         ) : (
           <div>
-            {/* Side-by-Side Responsive Grid of Saved Candidates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-1">
-              {shortlist.map((item, idx) => {
-                const fullDomain = `${item.domain}${item.tld}`
-                const isAvail = item.state === 'available'
-                const isCopied = copiedDomain === fullDomain
+            {/* Top Metric Overview Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="bg-[#ece8e0] border border-[#d8d3c8] rounded-xl p-3.5">
+                <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase">
+                  1st-Year Acquisition
+                </span>
+                <div className="text-2xl font-black text-neutral-900 mt-1">
+                  ${totalYr1.toFixed(2)}
+                </div>
+                <span className="text-[10px] text-neutral-500">Initial registration total</span>
+              </div>
 
-                return (
-                  <div
-                    key={item.domain}
-                    className="border-3 border-black bg-white p-5 pixel-shadow flex flex-col justify-between transition-transform hover:-translate-y-0.5"
-                  >
-                    <div>
-                      {/* Item Header */}
-                      <div className="flex items-center justify-between border-b-2 border-black pb-2 mb-2.5">
-                        <span className="bg-black text-white px-2 py-0.5 font-pixel text-[9px]">
-                          ITEM #{String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <span
-                          className={`font-pixel text-[9px] px-2 py-0.5 border-2 inline-flex items-center gap-1 ${
-                            isAvail
-                              ? 'border-black bg-[#22c55e] text-black font-bold'
-                              : 'border-[#cac4d0] bg-[#faf8f5] text-[#737373]'
-                          }`}
-                        >
-                          {isAvail && <span className="size-1.5 bg-black animate-ping" />}
-                          <span>{isAvail ? 'AVAILABLE' : 'TAKEN'}</span>
-                        </span>
-                      </div>
+              <div className="bg-[#ece8e0] border border-[#d8d3c8] rounded-xl p-3.5">
+                <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase">
+                  Annual Renewal Cost
+                </span>
+                <div className="text-2xl font-black text-neutral-900 mt-1">
+                  ${totalRenew.toFixed(2)}<span className="text-xs text-neutral-400">/yr</span>
+                </div>
+                <span className="text-[10px] text-neutral-500">Subsequent yearly maintenance</span>
+              </div>
 
-                      {/* Name & Domain */}
-                      <h4 className="font-pixel text-[20px] sm:text-[22px] text-black leading-tight">
-                        {item.name}
-                      </h4>
-                      <p
-                        className={`mt-1 font-mono text-[14px] font-bold ${
-                          isAvail ? 'text-black' : 'text-[#8a8a8a] line-through'
-                        }`}
-                      >
-                        {fullDomain}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="mt-4 flex items-center justify-between border-t-2 border-dashed border-[#e5e5e5] pt-2.5">
-                      <button
-                        type="button"
-                        onClick={() => copySingle(fullDomain)}
-                        className={`border-2 border-black px-3 py-1 font-mono text-[10px] font-bold pixel-btn cursor-pointer ${
-                          isCopied ? 'bg-black text-white' : 'bg-[#faf8f5] hover:bg-black hover:text-white'
-                        }`}
-                      >
-                        {isCopied ? 'COPIED! ✓' : 'COPY'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(item)}
-                        className="border-2 border-[#cac4d0] bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-[#737373] hover:border-black hover:text-black pixel-btn cursor-pointer"
-                      >
-                        REMOVE (-10 XP)
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+              <div className="bg-[#ece8e0] border border-[#d8d3c8] rounded-xl p-3.5">
+                <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase">
+                  3-Year Projected Holding TCO
+                </span>
+                <div className="text-2xl font-black text-neutral-900 mt-1">
+                  ${(totalYr1 + totalRenew * 2).toFixed(2)}
+                </div>
+                <span className="text-[10px] text-neutral-500">Full 36-month holding cost</span>
+              </div>
             </div>
+
+            {/* Action Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={copyAll}
+                  className="tactile-chiclet px-3.5 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer"
+                >
+                  {copiedAll ? '✓ COPIED ALL' : '📋 COPY ALL'}
+                </button>
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  className="tactile-chiclet px-3.5 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer"
+                >
+                  📥 EXPORT CSV
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => alert(`Bulk checkout cart prepared for ${shortlist.length} domains ($${totalYr1.toFixed(2)})...`)}
+                className="tactile-pink-btn px-5 py-2 rounded-xl text-white text-xs font-black cursor-pointer shadow-sm"
+              >
+                BULK REGISTER ALL (${totalYr1.toFixed(2)}) ➔
+              </button>
+            </div>
+
+            {/* Table of Saved Domains */}
+            <div className="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs">
+                  <thead className="bg-[#ece8e0] border-b border-[#d8d3c8] text-neutral-500 text-[10px] uppercase">
+                    <tr>
+                      <th className="py-3 px-4">Domain</th>
+                      <th className="py-3 px-4">Syllables &amp; Tone</th>
+                      <th className="py-3 px-4">Registrar</th>
+                      <th className="py-3 px-4">1st Year</th>
+                      <th className="py-3 px-4">Renewal</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100">
+                    {shortlist.map((item) => {
+                      const fullDomain = `${item.domain}${item.tld || '.com'}`
+                      const p = getDomainPrice(item.tld || '.com')
+                      const ph = analyzePhonetics(item.name || item.domain)
+
+                      return (
+                        <tr key={item.domain} className="hover:bg-neutral-50/70 transition-colors">
+                          <td className="py-3 px-4 font-bold text-neutral-900">
+                            <div>{item.name || item.domain}</div>
+                            <div className="text-[11px] text-neutral-400">{fullDomain}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 bg-neutral-100 rounded text-[10px] font-bold text-neutral-700 mr-1.5">
+                              {ph.syllables} syl
+                            </span>
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded text-[10px] font-bold border border-amber-200">
+                              {ph.tone}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-neutral-600">
+                            {p.registrar}
+                          </td>
+                          <td className="py-3 px-4 font-black text-neutral-900">
+                            ${p.reg}
+                          </td>
+                          <td className="py-3 px-4 text-neutral-500">
+                            ${p.renew}/yr
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => copySingle(fullDomain)}
+                                className="p-1.5 bg-neutral-100 hover:bg-neutral-200 rounded text-xs cursor-pointer"
+                                title="Copy"
+                              >
+                                {copiedDomain === fullDomain ? '✓' : '📋'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => alert(`Redirecting to registrar for ${fullDomain}...`)}
+                                className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded text-[11px] font-bold cursor-pointer"
+                              >
+                                Buy ${p.reg}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onRemove(item)}
+                                className="p-1.5 text-neutral-400 hover:text-red-600 rounded text-xs cursor-pointer"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
-
-        {/* Bottom Decorative Divider */}
-        <div className="mt-6">
-          <PixelDivider color="#ff2a8d" height={10} />
-        </div>
       </div>
     </div>
   )
