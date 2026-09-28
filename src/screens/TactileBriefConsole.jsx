@@ -66,9 +66,26 @@ export default function TactileBriefConsole({
     setTld(ext)
   }
 
-  // Handle Knob Drag (Turnable Radial Dial)
+  // Stepped detents and physics refs
+  const lastDetentRef = useRef(Math.round(creativityAngle / 15) * 15)
+  const lastKnobAngleRef = useRef(creativityAngle)
+  const lastKnobTimeRef = useRef(0)
+  const knobVelocityRef = useRef(0)
+  const knobAnimFrameRef = useRef(null)
+
+  const lastFaderStepRef = useRef({
+    innovative: Math.round(78 / 5) * 5,
+    simple: Math.round(45 / 5) * 5,
+    premium: Math.round(85 / 5) * 5,
+  })
+
+  // Handle Knob Drag (Turnable Radial Dial with stepped detents and momentum decay)
   const handleKnobPointerDown = (e) => {
+    if (knobAnimFrameRef.current) cancelAnimationFrame(knobAnimFrameRef.current)
     setIsDraggingKnob(true)
+    lastKnobAngleRef.current = creativityAngle
+    lastKnobTimeRef.current = performance.now()
+    knobVelocityRef.current = 0
     if (soundFX) soundFX.playTick()
   }
 
@@ -85,12 +102,63 @@ export default function TactileBriefConsole({
       if (deg > 180) deg -= 360
       // Clamp between -135 and +135
       const clamped = Math.max(-135, Math.min(135, deg))
+      
+      // 15° Stepped physical detents (18 distinct notches across 270°)
+      const currentDetent = Math.round(clamped / 15) * 15
+      if (currentDetent !== lastDetentRef.current) {
+        if (soundFX) soundFX.playTick()
+        lastDetentRef.current = currentDetent
+      }
+
+      // Track angular velocity for inertia
+      const now = performance.now()
+      const dt = now - lastKnobTimeRef.current
+      if (dt > 0 && dt < 120) {
+        knobVelocityRef.current = (clamped - lastKnobAngleRef.current) / dt
+      }
+      lastKnobTimeRef.current = now
+      lastKnobAngleRef.current = clamped
+
       setCreativityAngle(clamped)
-      if (soundFX) soundFX.playTick()
     }
 
     const handlePointerUp = () => {
-      if (isDraggingKnob) setIsDraggingKnob(false)
+      if (!isDraggingKnob) return
+      setIsDraggingKnob(false)
+
+      // Inertia momentum decay on release
+      let vel = knobVelocityRef.current
+      if (Math.abs(vel) > 0.12) {
+        let currentAng = lastKnobAngleRef.current
+        const runInertia = () => {
+          vel *= 0.88 // authentic mechanical friction decay
+          currentAng += vel * 16
+          if (currentAng > 135) {
+            currentAng = 135
+            vel = 0
+          } else if (currentAng < -135) {
+            currentAng = -135
+            vel = 0
+          }
+
+          const step = Math.round(currentAng / 15) * 15
+          if (step !== lastDetentRef.current) {
+            if (soundFX) soundFX.playTick()
+            lastDetentRef.current = step
+          }
+
+          if (Math.abs(vel) > 0.02) {
+            setCreativityAngle(currentAng)
+            knobAnimFrameRef.current = requestAnimationFrame(runInertia)
+          } else {
+            // Clean snap to nearest 15° detent notch
+            const finalSnap = Math.round(currentAng / 15) * 15
+            setCreativityAngle(finalSnap)
+            lastKnobAngleRef.current = finalSnap
+          }
+        }
+        knobAnimFrameRef.current = requestAnimationFrame(runInertia)
+      }
     }
 
     if (isDraggingKnob) {
@@ -100,10 +168,11 @@ export default function TactileBriefConsole({
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      if (knobAnimFrameRef.current) cancelAnimationFrame(knobAnimFrameRef.current)
     }
   }, [isDraggingKnob, soundFX])
 
-  // Handle Vertical Fader Drag
+  // Handle Vertical Fader Drag with 5% Calibrated Detents
   const handleFaderPointerDown = (key, e) => {
     setActiveFader(key)
     if (soundFX) soundFX.playTick()
@@ -118,7 +187,13 @@ export default function TactileBriefConsole({
       const relativeY = rect.bottom - e.clientY
       const percent = Math.min(100, Math.max(0, Math.round((relativeY / rect.height) * 100)))
       setFaders((prev) => ({ ...prev, [activeFader]: percent }))
-      if (soundFX) soundFX.playTick()
+      
+      // Calibrated 5% notch detent sound
+      const step = Math.round(percent / 5) * 5
+      if (lastFaderStepRef.current[activeFader] !== step) {
+        if (soundFX) soundFX.playTick()
+        lastFaderStepRef.current[activeFader] = step
+      }
     }
 
     const handleUp = () => {

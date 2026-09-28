@@ -61,6 +61,7 @@ export default function App() {
 
   // Gamification: Audio state, Hunter XP, Card HOLD/LOCK
   const [soundMuted, setSoundMuted] = useState(() => soundFX.getMuted())
+  const [soundProfile, setSoundProfile] = useState(() => soundFX.getProfile())
   const [xp, setXp] = useState(0)
   const hunterRank = getHunterRank(xp)
   const prevRankRef = useRef(hunterRank.title)
@@ -91,6 +92,21 @@ export default function App() {
     soundFX.setMuted(next)
     setSoundMuted(next)
     if (!next) soundFX.playCoin()
+  }
+
+  const cycleSoundProfile = () => {
+    if (soundMuted) {
+      soundFX.setMuted(false)
+      setSoundMuted(false)
+      soundFX.playCoin()
+      return
+    }
+    const profiles = ['relay', 'synth', 'tape']
+    const nextIdx = (profiles.indexOf(soundProfile) + 1) % profiles.length
+    const nextProf = profiles[nextIdx]
+    soundFX.setProfile(nextProf)
+    setSoundProfile(nextProf)
+    soundFX.playTick()
   }
 
   // Ambient soft retro chirp loop - activates when sound is enabled
@@ -389,6 +405,8 @@ export default function App() {
       }}
       soundMuted={soundMuted}
       onToggleSound={toggleSound}
+      soundProfile={soundProfile}
+      onCycleSoundProfile={cycleSoundProfile}
       hunterRank={hunterRank}
       xp={xp}
       shortlistCount={shortlist.length}

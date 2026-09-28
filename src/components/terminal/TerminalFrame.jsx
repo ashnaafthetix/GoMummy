@@ -14,6 +14,8 @@ export default function TerminalFrame({
   onViewChange,
   soundMuted,
   onToggleSound,
+  soundProfile = 'relay',
+  onCycleSoundProfile,
   hunterRank,
   xp = 0,
   shortlistCount = 0,
@@ -39,6 +41,8 @@ export default function TerminalFrame({
         onViewChange={onViewChange}
         soundMuted={soundMuted}
         onToggleSound={onToggleSound}
+        soundProfile={soundProfile}
+        onCycleSoundProfile={onCycleSoundProfile}
         shortlistCount={shortlistCount}
         compareCount={compareCount}
         onOpenShortlist={onOpenShortlist}

@@ -6,6 +6,17 @@ class RetroAudioEngine {
   constructor() {
     this.ctx = null
     this.isMuted = false
+    this.profile = 'relay' // 'relay' | 'synth' | 'tape'
+  }
+
+  setProfile(profile) {
+    if (['relay', 'synth', 'tape'].includes(profile)) {
+      this.profile = profile
+    }
+  }
+
+  getProfile() {
+    return this.profile
   }
 
   init() {
@@ -281,50 +292,116 @@ class RetroAudioEngine {
     })
   }
 
-  // Soft rotary knob step tick
+  // Tactile rotary knob step tick (Profile-specific acoustic texture)
   playTick() {
     if (this.isMuted) return
     this.init()
     if (!this.ctx) return
 
     const now = this.ctx.currentTime
-    const osc = this.ctx.createOscillator()
-    const gain = this.ctx.createGain()
 
-    osc.type = 'triangle'
-    osc.frequency.setValueAtTime(750, now)
-    osc.frequency.exponentialRampToValueAtTime(160, now + 0.035)
+    if (this.profile === 'synth') {
+      // Warm analog sine chirp with subtle harmonic
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(880, now)
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.035)
 
-    gain.gain.setValueAtTime(0.06, now)
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
+      gain.gain.setValueAtTime(0.08, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
 
-    osc.connect(gain)
-    gain.connect(this.ctx.destination)
-    osc.start(now)
-    osc.stop(now + 0.035)
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.035)
+    } else if (this.profile === 'tape') {
+      // Mechanical ratchet cassette reel detent
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(560, now)
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.025)
+
+      gain.gain.setValueAtTime(0.09, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025)
+
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.025)
+    } else {
+      // Default: RELAY (Crisp high-speed industrial microswitch transient)
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(1400, now)
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.022)
+
+      gain.gain.setValueAtTime(0.12, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.022)
+
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.022)
+    }
   }
 
-  // Tactile mechanical keycap depression thud
+  // Tactile mechanical keycap depression thud (Profile-specific acoustic texture)
   playKeyThud() {
     if (this.isMuted) return
     this.init()
     if (!this.ctx) return
 
     const now = this.ctx.currentTime
-    const osc = this.ctx.createOscillator()
-    const gain = this.ctx.createGain()
 
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(180, now)
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.05)
+    if (this.profile === 'synth') {
+      // Warm resonant analog filter drop
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(280, now)
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.06)
 
-    gain.gain.setValueAtTime(0.12, now)
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
+      gain.gain.setValueAtTime(0.15, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06)
 
-    osc.connect(gain)
-    gain.connect(this.ctx.destination)
-    osc.start(now)
-    osc.stop(now + 0.05)
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.06)
+    } else if (this.profile === 'tape') {
+      // Heavy cassette transport solenoid latch clunk
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(130, now)
+      osc.frequency.exponentialRampToValueAtTime(35, now + 0.07)
+
+      gain.gain.setValueAtTime(0.2, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07)
+
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.07)
+    } else {
+      // Default: RELAY (Heavy solid keycap bottom-out thud)
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(190, now)
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.05)
+
+      gain.gain.setValueAtTime(0.18, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
+
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.05)
+    }
   }
 }
 

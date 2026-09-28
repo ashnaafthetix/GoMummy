@@ -5,6 +5,8 @@ export default function TactileConsoleHeader({
   onViewChange,
   soundMuted,
   onToggleSound,
+  soundProfile = 'relay',
+  onCycleSoundProfile,
   shortlistCount = 0,
   compareCount = 0,
   onOpenShortlist,
@@ -17,6 +19,33 @@ export default function TactileConsoleHeader({
     if (callback) callback()
     else onViewChange(view)
   }
+
+  // Profile metadata for LED and dial rotation
+  const profileConfig = {
+    relay: {
+      label: '• RELAY',
+      colorText: 'text-emerald-400',
+      ledClass: 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]',
+      rotClass: 'rotate-0',
+      title: 'Acoustic Profile: RELAY (Industrial microswitch). Click to switch to SYNTH',
+    },
+    synth: {
+      label: '• SYNTH',
+      colorText: 'text-cyan-400',
+      ledClass: 'bg-[#06b6d4] shadow-[0_0_8px_#06b6d4]',
+      rotClass: 'rotate-45',
+      title: 'Acoustic Profile: SYNTH (Analog sine filter drop). Click to switch to TAPE',
+    },
+    tape: {
+      label: '• TAPE',
+      colorText: 'text-amber-400',
+      ledClass: 'bg-[#f59e0b] shadow-[0_0_8px_#f59e0b]',
+      rotClass: 'rotate-90',
+      title: 'Acoustic Profile: TAPE (Cassette transport ratchet). Click to switch to RELAY',
+    },
+  }
+
+  const activeConf = profileConfig[soundProfile] || profileConfig.relay
 
   return (
     <header className="sticky top-2 sm:top-3 z-40 w-full max-w-[1240px] mx-auto mb-4 sm:mb-6 px-2 sm:px-4">
@@ -136,21 +165,39 @@ export default function TactileConsoleHeader({
             )}
           </button>
 
-          {/* Tactile Hardware Capsule Switch with Green LED and Silver Rotary Knob */}
+          {/* Tactile Hardware Capsule Switch with Profile LED and Metallic Rotary Dial */}
           <div
-            onClick={onToggleSound}
-            className="flex items-center gap-2 bg-[#121316] pl-2.5 pr-1 py-1 rounded-full border border-neutral-700 shadow-inner cursor-pointer hover:border-neutral-500 transition-colors select-none"
-            title="Toggle Procedural Audio SFX"
+            onClick={() => {
+              if (soundMuted) {
+                onToggleSound()
+              } else if (onCycleSoundProfile) {
+                onCycleSoundProfile()
+              }
+            }}
+            className="flex items-center gap-2 bg-[#121316] pl-2.5 pr-1 py-1 rounded-full border border-neutral-700 shadow-inner cursor-pointer hover:border-neutral-400 transition-all select-none active:scale-[0.98]"
+            title={soundMuted ? 'SFX is OFF. Click to enable' : activeConf.title}
           >
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              soundMuted ? 'bg-neutral-600' : 'bg-[#22c55e] shadow-[0_0_6px_#22c55e]'
-            }`} />
-            <span className={`text-[10px] font-black tracking-wider ${soundMuted ? 'text-neutral-500' : 'text-emerald-400'}`}>
-              SFX : {soundMuted ? 'OFF' : 'ON'}
+            <span
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                soundMuted ? 'bg-neutral-600' : activeConf.ledClass
+              }`}
+            />
+            <span
+              className={`text-[10px] font-black tracking-wider transition-colors duration-200 ${
+                soundMuted ? 'text-neutral-500' : activeConf.colorText
+              }`}
+            >
+              {soundMuted ? 'SFX : OFF' : activeConf.label}
             </span>
-            {/* Metallic Silver Rotary Dial */}
-            <div className="w-4 h-4 rounded-full bg-gradient-to-b from-[#ffffff] via-[#e2e0d8] to-[#9c978e] border border-neutral-400 shadow-sm flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-[#9c978e] to-[#ffffff] border border-neutral-500/40" />
+            {/* Metallic Silver Rotary Dial with directional index notch */}
+            <div
+              className={`w-4 h-4 rounded-full bg-gradient-to-b from-[#ffffff] via-[#e2e0d8] to-[#9c978e] border border-neutral-400 shadow-sm flex items-center justify-center transition-transform duration-300 ${
+                soundMuted ? 'rotate-0 opacity-60' : activeConf.rotClass
+              }`}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-[#9c978e] to-[#ffffff] border border-neutral-500/40 relative">
+                <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-0.5 h-1 bg-black/70 rounded-full" />
+              </div>
             </div>
           </div>
         </div>
