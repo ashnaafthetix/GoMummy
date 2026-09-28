@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
+import TorxScrew from '../components/hardware/TorxScrew.jsx'
+import PhotorealLED from '../components/hardware/PhotorealLED.jsx'
 
 export default function TactileBriefConsole({
   initial,
@@ -179,11 +181,11 @@ export default function TactileBriefConsole({
       {/* 3. MOLDED CREAM WORKSTATION HARDWARE CONSOLE */}
       <form onSubmit={handleSubmit} className="hardware-chassis-shell relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-7 overflow-hidden text-neutral-800">
         
-        {/* Subtle Decorative Hex Screws in Corners */}
-        <span className="absolute left-4 top-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute right-4 top-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute left-4 bottom-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute right-4 bottom-4 text-xs text-neutral-400 select-none">✜</span>
+        {/* Photorealistic Milled Torx Screws in Chassis Corners */}
+        <TorxScrew size={14} className="absolute left-4 top-4" />
+        <TorxScrew size={14} className="absolute right-4 top-4" />
+        <TorxScrew size={14} className="absolute left-4 bottom-4" />
+        <TorxScrew size={14} className="absolute right-4 bottom-4" />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10">
           
@@ -231,6 +233,7 @@ export default function TactileBriefConsole({
               
               <div className="flex flex-wrap items-center justify-between gap-3 mb-2.5">
                 <div className="flex items-center gap-2">
+                  <PhotorealLED status="pink" size={8} />
                   <span className="px-2 py-0.5 bg-black text-white font-black text-[10px] rounded">
                     01
                   </span>
@@ -282,17 +285,22 @@ export default function TactileBriefConsole({
 
                 {/* Big Spun-Aluminum Radial Dial: CREATIVITY */}
                 <div className="flex flex-col items-center justify-center pl-2">
-                  <div
-                    ref={knobRef}
-                    onPointerDown={handleKnobPointerDown}
-                    className="spun-aluminum-knob relative w-14 h-14 rounded-full cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
-                    style={{ transform: `rotate(${creativityAngle}deg)` }}
-                    title={`Creativity Knob: ${Math.round(((creativityAngle + 135) / 270) * 100)}% (Click & drag to rotate)`}
-                  >
-                    {/* Center Indented Core */}
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#b0b4b8] to-[#ffffff] border border-neutral-300 shadow-inner" />
-                    {/* Radial Pointer Notch on top */}
-                    <div className="absolute top-1 w-1 h-3 rounded-full bg-[#1c1d20] shadow-sm" />
+                  <div className="relative p-1 flex items-center justify-center">
+                    {/* Precision Dial Tick Ring */}
+                    <div className="absolute inset-0 rounded-full border border-dashed border-neutral-400/60 pointer-events-none" />
+                    
+                    <div
+                      ref={knobRef}
+                      onPointerDown={handleKnobPointerDown}
+                      className="spun-aluminum-knob relative w-14 h-14 rounded-full cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+                      style={{ transform: `rotate(${creativityAngle}deg)` }}
+                      title={`Creativity Knob: ${Math.round(((creativityAngle + 135) / 270) * 100)}% (Click & drag to rotate)`}
+                    >
+                      {/* Center Indented Core with Specular Chamfer */}
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#b0b4b8] to-[#ffffff] border border-neutral-300 shadow-inner" />
+                      {/* Radial Pointer Notch on top */}
+                      <div className="absolute top-1 w-1 h-3 rounded-full bg-[#1c1d20] shadow-sm" />
+                    </div>
                   </div>
                   <span className="text-[9px] font-black text-neutral-600 tracking-wider uppercase mt-1">
                     CREATIVITY
@@ -310,6 +318,7 @@ export default function TactileBriefConsole({
               
               <div className="flex flex-wrap items-center justify-between gap-3 mb-2.5">
                 <div className="flex items-center gap-2">
+                  <PhotorealLED status="pink" size={8} />
                   <span className="px-2 py-0.5 bg-black text-white font-black text-[10px] rounded">
                     02
                   </span>
@@ -414,6 +423,7 @@ export default function TactileBriefConsole({
               
               <div className="flex flex-wrap items-center justify-between gap-3 mb-2.5">
                 <div className="flex items-center gap-2">
+                  <PhotorealLED status="pink" size={8} />
                   <span className="px-2 py-0.5 bg-black text-white font-black text-[10px] rounded">
                     03
                   </span>

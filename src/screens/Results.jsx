@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import ResultCard from '../components/ResultCard.jsx'
 import SubjectCheckBanner from '../components/SubjectCheckBanner.jsx'
+import TorxScrew from '../components/hardware/TorxScrew.jsx'
 import { getDomainPrice, analyzePhonetics } from '../services/domainService.js'
 
 export default function Results({
@@ -99,11 +100,11 @@ export default function Results({
       {/* 3. MOLDED CREAM WORKSTATION FEED CHASSIS */}
       <div className="hardware-chassis-shell relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-7 overflow-hidden text-neutral-800 mb-6">
         
-        {/* Subtle Decorative Hex Screws */}
-        <span className="absolute left-4 top-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute right-4 top-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute left-4 bottom-4 text-xs text-neutral-400 select-none">✜</span>
-        <span className="absolute right-4 bottom-4 text-xs text-neutral-400 select-none">✜</span>
+        {/* Photorealistic Milled Metal Torx Screws */}
+        <TorxScrew size={14} className="absolute left-4 top-4" />
+        <TorxScrew size={14} className="absolute right-4 top-4" />
+        <TorxScrew size={14} className="absolute left-4 bottom-4" />
+        <TorxScrew size={14} className="absolute right-4 bottom-4" />
 
         {/* Action Bar: Back to Brief, Filter Chips, and Regenerate Button */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-[#dbd6cc]">

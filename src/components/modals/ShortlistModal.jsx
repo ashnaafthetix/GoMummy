@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { getDomainPrice, analyzePhonetics } from '../../services/domainService.js'
+import TorxScrew from '../hardware/TorxScrew.jsx'
 
 export default function ShortlistModal({
   shortlist = [],
@@ -91,11 +92,11 @@ export default function ShortlistModal({
         onClick={(e) => e.stopPropagation()}
         className="hardware-chassis-shell relative w-full max-w-[1020px] my-auto rounded-[28px] p-6 sm:p-8 shadow-2xl text-neutral-800"
       >
-        {/* Corner Hex Screws */}
-        <span className="absolute left-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
-        <span className="absolute right-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
-        <span className="absolute left-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
-        <span className="absolute right-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
+        {/* Photorealistic Milled Metal Torx Screws */}
+        <TorxScrew size={12} className="absolute left-3.5 top-3.5" />
+        <TorxScrew size={12} className="absolute right-3.5 top-3.5" />
+        <TorxScrew size={12} className="absolute left-3.5 bottom-3.5" />
+        <TorxScrew size={12} className="absolute right-3.5 bottom-3.5" />
 
         {/* Modal Header */}
         <div className="flex flex-wrap items-center justify-between pb-3 mb-6 border-b border-[#dbd6cc] gap-3">

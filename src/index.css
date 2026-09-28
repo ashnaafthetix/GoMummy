@@ -403,138 +403,188 @@
 html, body, #root { height: 100%; }
 body { margin: 0; background: #f1efea; }
 
-/* RETRO-FUTURISTIC INDUSTRIAL WORKSTATION (BENCHMARK STYLES) */
+/* RETRO-FUTURISTIC INDUSTRIAL WORKSTATION (PHOTOREALISTIC HARDWARE) */
 .blueprint-cross-grid {
-  background-color: #f2efe9;
+  background-color: #f0ece3;
   background-image: 
-    radial-gradient(#b8b5ad 1.4px, transparent 1.4px),
+    radial-gradient(#b0aca3 1.5px, transparent 1.5px),
     linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
+/* Molded ABS plastic / coated magnesium chassis with ambient occlusion & chamfer */
 .hardware-chassis-shell {
-  background: linear-gradient(180deg, #f7f5f1 0%, #ece8e1 100%);
-  border: 2.5px solid #d4cfc6;
+  background: 
+    linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(240, 237, 230, 0.8) 100%),
+    #e8e4db;
+  border: 1px solid #c8c3b7;
   box-shadow: 
-    0 1px 0 1px rgba(255, 255, 255, 0.85) inset,
-    0 -1px 0 1px rgba(0, 0, 0, 0.06) inset,
-    0 24px 50px -10px rgba(0, 0, 0, 0.16),
-    0 12px 24px -5px rgba(0, 0, 0, 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.12) inset,
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 18px 45px -12px rgba(45, 38, 25, 0.18),
+    0 8px 18px -4px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+/* Photorealistic hardware card module */
+.photoreal-card {
+  background: 
+    linear-gradient(180deg, #ffffff 0%, #f7f5f0 100%);
+  border: 1px solid #d4cfc4;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.08) inset,
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 12px 28px -6px rgba(40, 35, 25, 0.08);
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+.photoreal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.08) inset,
+    0 4px 10px rgba(0, 0, 0, 0.06),
+    0 18px 36px -8px rgba(40, 35, 25, 0.14);
 }
 
 .hardware-inset-panel {
   background: #ffffff;
-  border: 1.5px solid #dcd7ce;
+  border: 1px solid #cfc9bd;
   box-shadow: 
-    inset 0 3px 6px rgba(0, 0, 0, 0.07),
-    inset 0 1px 2px rgba(0, 0, 0, 0.1),
-    0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(0, 0, 0, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .hardware-subpanel-bay {
-  background: #f7f5f1;
-  border: 1.5px solid #dbd6cc;
+  background: #f4f1ea;
+  border: 1px solid #d6d0c4;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 0 rgba(255, 255, 255, 0.85);
   border-radius: 14px;
+}
+
+/* Molded Seam Parting Line */
+.molded-seam {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 /* TACTILE 3D PUSH BUTTONS */
 .tactile-pink-btn {
-  background: linear-gradient(180deg, #ff3b94 0%, #ff2079 100%);
-  border: 1.5px solid #d90f61;
+  background: linear-gradient(180deg, #ff439b 0%, #ff1f7d 100%);
+  border: 1px solid #c90956;
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 4px 0 0 #b3004b,
-    0 6px 14px rgba(255, 32, 121, 0.35);
-  transition: transform 0.07s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.07s cubic-bezier(0.2, 0, 0, 1);
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.15) inset,
+    0 4px 0 0 #a30044,
+    0 6px 16px rgba(255, 31, 125, 0.35);
+  transition: transform 0.06s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.06s cubic-bezier(0.2, 0, 0, 1);
 }
 .tactile-pink-btn:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.04);
 }
 .tactile-pink-btn:active {
   transform: translateY(3px);
   box-shadow: 
     0 1px 0 rgba(255, 255, 255, 0.2) inset,
-    0 1px 0 0 #b3004b,
-    0 2px 6px rgba(255, 32, 121, 0.25);
+    0 1px 0 0 #a30044,
+    0 2px 6px rgba(255, 31, 125, 0.25);
 }
 
 /* TACTILE CHICLET KEYCAP */
 .tactile-chiclet {
-  background: linear-gradient(180deg, #ffffff 0%, #f0eee8 100%);
-  border: 1.5px solid #d0cbc1;
+  background: linear-gradient(180deg, #ffffff 0%, #edeae2 100%);
+  border: 1px solid #c5bfb4;
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 3px 0 0 #b8b2a5,
-    0 4px 8px rgba(0, 0, 0, 0.06);
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.08) inset,
+    0 3px 0 0 #aba497,
+    0 4px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.06s ease, box-shadow 0.06s ease;
 }
 .tactile-chiclet:hover {
-  background: linear-gradient(180deg, #ffffff 0%, #f7f5ef 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ec 100%);
 }
 .tactile-chiclet:active {
   transform: translateY(2px);
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 1px 0 0 #b8b2a5,
-    0 2px 4px rgba(0, 0, 0, 0.04);
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 1px 0 0 #aba497,
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tactile-chiclet-active {
-  background: linear-gradient(180deg, #ff3b94 0%, #ff2079 100%) !important;
-  border-color: #d90f61 !important;
+  background: linear-gradient(180deg, #ff439b 0%, #ff1f7d 100%) !important;
+  border-color: #c90956 !important;
   color: #ffffff !important;
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 3px 0 0 #b3004b,
-    0 4px 10px rgba(255, 32, 121, 0.3) !important;
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 3px 0 0 #a30044,
+    0 4px 12px rgba(255, 31, 125, 0.35) !important;
 }
 
-/* SPUN ALUMINUM RADIAL KNOB */
+/* PHOTOREALISTIC SPUN ALUMINUM RADIAL KNOB WITH LATHE GROOVES */
 .spun-aluminum-knob {
   background: 
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, transparent 30%),
+    radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.85) 0%, transparent 28%),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 1.5px, rgba(0, 0, 0, 0.035) 2px),
     conic-gradient(
       from 45deg,
-      #f5f5f5 0deg,
-      #c4c7cc 45deg,
+      #f8f8f7 0deg,
+      #babdc2 45deg,
       #ffffff 90deg,
-      #b0b4b8 135deg,
+      #a8abb0 135deg,
       #ffffff 180deg,
-      #c4c7cc 225deg,
+      #babdc2 225deg,
       #ffffff 270deg,
-      #a8acb0 315deg,
-      #f5f5f5 360deg
+      #9fa3a8 315deg,
+      #f8f8f7 360deg
     );
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 6px 14px rgba(0, 0, 0, 0.22),
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    0 0 0 2px #d4cfc7;
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -1px 1px rgba(0, 0, 0, 0.25) inset,
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    0 3px 6px rgba(0, 0, 0, 0.16),
+    0 0 0 2px #cfc9be;
 }
 
 /* ILLUMINATED FADER TRACK */
 .fader-slot-track {
-  background: #201e1c;
+  background: #181715;
   box-shadow: 
-    inset 0 2px 5px rgba(0, 0, 0, 0.7),
-    0 1px 0 rgba(255, 255, 255, 0.8);
+    inset 0 3px 7px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.9);
   border-radius: 9999px;
   position: relative;
 }
 
 .fader-glow-fill {
-  background: linear-gradient(180deg, #ff2a85 0%, #d40f5a 100%);
-  box-shadow: 0 0 8px #ff2a85;
+  background: linear-gradient(180deg, #ff2a85 0%, #cb0f56 100%);
+  box-shadow: 0 0 10px #ff2a85, 0 0 3px #ff70b3;
   border-radius: 9999px;
 }
 
+/* KNURLED ALUMINUM FADER CAP WITH GRIP REEDING */
 .fader-thumb-silver {
-  background: linear-gradient(180deg, #ffffff 0%, #d9d6d0 50%, #b8b3a8 100%);
-  border: 1px solid #9e998e;
+  background: 
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 3px,
+      rgba(255, 255, 255, 0.3) 3px,
+      rgba(255, 255, 255, 0.3) 4px
+    ),
+    linear-gradient(180deg, #ffffff 0%, #dedbd4 50%, #aba598 100%);
+  border: 1px solid #8f8a7e;
   box-shadow: 
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 4px 8px rgba(0, 0, 0, 0.25);
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+    0 5px 10px rgba(0, 0, 0, 0.28);
   border-radius: 5px;
 }
 

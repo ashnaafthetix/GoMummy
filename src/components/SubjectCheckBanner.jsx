@@ -1,5 +1,7 @@
 import React from 'react'
 import { getDomainPrice, analyzePhonetics } from '../services/domainService.js'
+import TorxScrew from './hardware/TorxScrew.jsx'
+import PhotorealLED from './hardware/PhotorealLED.jsx'
 
 export default function SubjectCheckBanner({
   brief,
@@ -39,32 +41,32 @@ export default function SubjectCheckBanner({
 
   return (
     <div className="hardware-chassis-shell relative rounded-2xl p-5 sm:p-6 mb-6 text-neutral-800 shadow-md">
-      {/* Corner Hex Screws */}
-      <span className="absolute left-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
-      <span className="absolute right-3 top-3 text-[10px] text-neutral-400 select-none">✜</span>
-      <span className="absolute left-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
-      <span className="absolute right-3 bottom-3 text-[10px] text-neutral-400 select-none">✜</span>
+      {/* Photorealistic Milled Metal Torx Screws in Corners */}
+      <TorxScrew size={13} className="absolute left-3.5 top-3.5" />
+      <TorxScrew size={13} className="absolute right-3.5 top-3.5" />
+      <TorxScrew size={13} className="absolute left-3.5 bottom-3.5" />
+      <TorxScrew size={13} className="absolute right-3.5 bottom-3.5" />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-[#dbd6cc]">
+      {/* Top Telemetry Line */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-[#d8d3c7] px-1">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#ff2a85] animate-pulse inline-block shadow-[0_0_8px_#ff2a85]" />
-          <span className="text-xs font-mono font-black tracking-wider text-black uppercase">
-            JOB 01 // TARGET SUBJECT AVAILABILITY CHECK
+          <PhotorealLED status="pink" size={10} />
+          <span className="text-xs font-mono font-bold tracking-widest text-neutral-900 uppercase">
+            TARGET DOMAIN CHECK // {targetCard.tld || '.com'}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 bg-black text-white font-mono text-[10px] font-bold rounded">
+          <span className="px-2 py-0.5 bg-black text-white font-mono text-[10px] font-bold rounded">
             DNS: GOOGLE DOH
           </span>
-          <span className="px-2 py-0.5 bg-neutral-200 text-neutral-800 font-mono text-[10px] font-bold rounded">
+          <span className="px-2 py-0.5 bg-neutral-200/80 text-neutral-800 font-mono text-[10px] font-bold rounded">
             {phonetics.syllables} syl • {phonetics.tone}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-        
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center px-1">
         {/* Left Information Bay */}
         <div className="md:col-span-8 space-y-2">
           <div className="flex items-baseline gap-3">
@@ -74,7 +76,7 @@ export default function SubjectCheckBanner({
             <button
               type="button"
               onClick={handleSpeak}
-              title="Pronounce Acoustic Sound"
+              title="Pronounce brand name"
               className="text-neutral-400 hover:text-black transition-colors cursor-pointer text-sm"
             >
               🔊
@@ -83,16 +85,11 @@ export default function SubjectCheckBanner({
 
           {/* Full domain with LED Beacon & Pricing */}
           <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-mono">
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-neutral-300">
+            <div className="flex items-center gap-2.5 bg-white px-3.5 py-1.5 rounded-lg border border-[#cfc9be] shadow-2xs">
               <span className="font-bold text-neutral-900">{fullDomain}</span>
-              <span
-                className={`w-2.5 h-2.5 rounded-full inline-block ${
-                  isChecking
-                    ? 'bg-amber-400 animate-ping'
-                    : isAvail
-                    ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]'
-                    : 'bg-red-500'
-                }`}
+              <PhotorealLED
+                status={isChecking ? 'checking' : isAvail ? 'available' : 'registered'}
+                size={10}
               />
               <span
                 className={`font-black uppercase text-[11px] ${
@@ -100,15 +97,15 @@ export default function SubjectCheckBanner({
                     ? 'text-amber-600'
                     : isAvail
                     ? 'text-emerald-700'
-                    : 'text-red-600'
+                    : 'text-neutral-500'
                 }`}
               >
                 {isChecking ? 'Checking DNS...' : isAvail ? 'AVAILABLE' : 'TAKEN / REGISTERED'}
               </span>
             </div>
 
-            <div className="bg-[#ece8e0] px-3 py-1.5 rounded-lg border border-[#d8d3c8] text-xs font-mono font-bold text-neutral-700">
-              1st Year: <span className="text-neutral-900 font-black">${priceInfo.reg}</span> • Renewal: ${priceInfo.renew}/yr
+            <div className="bg-[#edeae2] px-3 py-1.5 rounded-lg border border-[#d6d0c4] text-xs font-mono font-bold text-neutral-700">
+              1st Year: <span className="text-neutral-900 font-extrabold">${priceInfo.reg}</span> • Renewal: ${priceInfo.renew}/yr
             </div>
           </div>
         </div>
@@ -135,7 +132,7 @@ export default function SubjectCheckBanner({
               }}
               className={`p-2 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer ${
                 isShortlisted
-                  ? 'bg-amber-400 border-amber-500 text-black'
+                  ? 'bg-amber-400 border-amber-500 text-black shadow-xs'
                   : 'bg-white border-neutral-300 text-neutral-600 hover:text-black'
               }`}
               title="Save to Shortlist"
@@ -168,7 +165,6 @@ export default function SubjectCheckBanner({
             <span>REGISTER {fullDomain.toUpperCase()} ➔ ${priceInfo.reg}</span>
           </button>
         </div>
-
       </div>
     </div>
   )
