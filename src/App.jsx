@@ -506,6 +506,47 @@ export default function App() {
       {questionsOpen && (
         <QuestionsPanel answers={answers} onSave={saveAnswer} onClose={() => setQuestionsOpen(false)} />
       )}
+
+      {/* Persistent Docked Hardware Quick Latch Bar (when trays are closed and items exist) */}
+      {!compareModalOpen && !shortlistModalOpen && (shortlist.length > 0 || compareSel.length > 0) && (
+        <div className="fixed bottom-4 right-4 sm:right-8 z-40 flex items-center gap-2 font-mono hardware-tray-slide-up">
+          {shortlist.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (soundFX) soundFX.playLock()
+                setShortlistModalOpen(true)
+              }}
+              className="tactile-chiclet px-3.5 py-2 rounded-xl text-neutral-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xl border border-amber-400 bg-white hover:border-black active:translate-y-0.5"
+              title="Open docked shortlist portfolio tray"
+            >
+              <span className="text-amber-500">⭐</span>
+              <span>SHORTLIST</span>
+              <span className="px-1.5 py-0.2 bg-amber-400 text-black font-black text-[10px] rounded-full">
+                {shortlist.length}
+              </span>
+            </button>
+          )}
+
+          {compareSel.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (soundFX) soundFX.playLock()
+                setCompareModalOpen(true)
+              }}
+              className="tactile-chiclet px-3.5 py-2 rounded-xl text-neutral-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-xl border border-neutral-300 bg-white hover:border-black active:translate-y-0.5"
+              title="Open docked dual compare tray"
+            >
+              <span>⚖️</span>
+              <span>COMPARE</span>
+              <span className="px-1.5 py-0.2 bg-black text-white font-black text-[10px] rounded-full">
+                {compareSel.length}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
     </TerminalFrame>
   )
 }

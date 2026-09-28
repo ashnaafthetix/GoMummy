@@ -597,4 +597,52 @@ body { margin: 0; background: #f1efea; }
   animation: pinkCursorBlink 1s infinite;
 }
 
+/* DOCKED HARDWARE TRAY & DRAWER STYLES */
+@keyframes hardwareTraySlideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.hardware-tray-slide-up {
+  animation: hardwareTraySlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hardware-tray-chassis {
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.7) 0%, transparent 70%),
+    linear-gradient(180deg, #f2efe9 0%, #ebe7df 40%, #e2ded5 100%);
+  border-top: 2px solid rgba(255, 255, 255, 0.95);
+  border-left: 1px solid #d5cfc2;
+  border-right: 1px solid #d5cfc2;
+  box-shadow: 
+    0 -24px 60px rgba(0, 0, 0, 0.32),
+    0 -6px 16px rgba(0, 0, 0, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.tray-handle-latch {
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.08) 3px,
+      rgba(0, 0, 0, 0.08) 4px,
+      rgba(255, 255, 255, 0.25) 4px,
+      rgba(255, 255, 255, 0.25) 5px
+    ),
+    linear-gradient(180deg, #ded9ce 0%, #c4bdae 100%);
+  border: 1px solid #a8a192;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 -1px 1px rgba(0, 0, 0, 0.2) inset,
+    0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
 
