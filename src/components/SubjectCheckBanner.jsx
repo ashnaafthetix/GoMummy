@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getDomainPrice, analyzePhonetics, generateSmartAffixes } from '../services/domainService.js'
 import TorxScrew from './hardware/TorxScrew.jsx'
 import PhotorealLED from './hardware/PhotorealLED.jsx'
 import SocialBeaconStrip from './hardware/SocialBeaconStrip.jsx'
+import AudioOscilloscope from './hardware/AudioOscilloscope.jsx'
 
 export default function SubjectCheckBanner({
   brief,
@@ -20,6 +21,8 @@ export default function SubjectCheckBanner({
 
   const [activeSlug, setActiveSlug] = useState(targetCard.domain)
   const [overrideAvail, setOverrideAvail] = useState(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const speakTimeoutRef = useRef(null)
 
   useEffect(() => {
     setActiveSlug(targetCard.domain)
@@ -37,11 +40,23 @@ export default function SubjectCheckBanner({
 
   const handleSpeak = () => {
     if (soundFX) soundFX.playTick()
+    setIsSpeaking(true)
+    if (speakTimeoutRef.current) clearTimeout(speakTimeoutRef.current)
+
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(targetCard.name || brief.name)
       utterance.rate = 0.95
+      utterance.onend = () => {
+        speakTimeoutRef.current = setTimeout(() => setIsSpeaking(false), 200)
+      }
+      utterance.onerror = () => {
+        setIsSpeaking(false)
+      }
       window.speechSynthesis.speak(utterance)
+      speakTimeoutRef.current = setTimeout(() => setIsSpeaking(false), 2200)
+    } else {
+      speakTimeoutRef.current = setTimeout(() => setIsSpeaking(false), 1600)
     }
   }
 
@@ -75,6 +90,7 @@ export default function SubjectCheckBanner({
           <span className="px-2 py-0.5 bg-neutral-200/80 text-neutral-800 font-mono text-[10px] font-bold rounded">
             {phonetics.syllables} syl • {phonetics.tone}
           </span>
+          <AudioOscilloscope active={isSpeaking} tone={phonetics.tone} />
         </div>
       </div>
 
@@ -89,7 +105,11 @@ export default function SubjectCheckBanner({
               type="button"
               onClick={handleSpeak}
               title="Pronounce brand name"
-              className="text-neutral-400 hover:text-black transition-colors cursor-pointer text-sm"
+              className={`p-1.5 rounded transition-all cursor-pointer text-sm ${
+                isSpeaking
+                  ? 'bg-[#22c55e] text-white shadow-[0_0_8px_#22c55e] scale-110'
+                  : 'text-neutral-400 hover:text-black hover:bg-neutral-200'
+              }`}
             >
               🔊
             </button>
