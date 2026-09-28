@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import ResultCard from '../components/ResultCard.jsx'
 import SubjectCheckBanner from '../components/SubjectCheckBanner.jsx'
 import TorxScrew from '../components/hardware/TorxScrew.jsx'
+import TapeDeckScrubber from '../components/hardware/TapeDeckScrubber.jsx'
 import { getDomainPrice, analyzePhonetics } from '../services/domainService.js'
 
 export default function Results({
@@ -28,6 +29,10 @@ export default function Results({
   onDismissToast,
   apiNotice,
   onDismissNotice,
+  historyIndex = 0,
+  totalBatches = 1,
+  onRewindBatch,
+  onForwardBatch,
 }) {
   const [copiedDomain, setCopiedDomain] = useState(null)
   const [activeTldFilter, setActiveTldFilter] = useState('all')
@@ -106,21 +111,23 @@ export default function Results({
         <TorxScrew size={14} className="absolute left-4 bottom-4" />
         <TorxScrew size={14} className="absolute right-4 bottom-4" />
 
-        {/* Action Bar: Back to Brief, Filter Chips, and Regenerate Button */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-[#dbd6cc]">
+        {/* Action Bar: Back to Brief, Filter Chips, and Transport Cluster */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#dbd6cc]">
           
-          <button
-            type="button"
-            onClick={onNavigateToBrief}
-            className="tactile-chiclet px-4 py-2 rounded-xl text-neutral-800 font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-          >
-            <span>←</span>
-            <span>BACK TO BRIEF</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onNavigateToBrief}
+              className="tactile-chiclet px-3.5 py-1.5 rounded-xl text-neutral-800 font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            >
+              <span>←</span>
+              <span>BACK TO BRIEF</span>
+            </button>
 
-          {/* Filter Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase mr-1">Filter:</span>
+            <div className="h-4 w-px bg-neutral-300 hidden sm:block mx-1" />
+
+            {/* Filter Chips */}
+            <span className="text-[10px] font-bold text-neutral-400 uppercase mr-0.5">Filter:</span>
             {['all', '.com', '.io', '.ai', '.co'].map((t) => (
               <button
                 key={t}
@@ -129,7 +136,7 @@ export default function Results({
                   if (soundFX) soundFX.playTick()
                   setActiveTldFilter(t)
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   activeTldFilter === t
                     ? 'bg-neutral-900 text-white shadow-2xs'
                     : 'bg-white border border-neutral-300 text-neutral-700 hover:border-black'
@@ -147,7 +154,7 @@ export default function Results({
                   if (soundFX) soundFX.playTick()
                   setActiveToneFilter(tone)
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   activeToneFilter === tone
                     ? 'bg-[#ff2a85] text-white shadow-2xs'
                     : 'bg-white border border-neutral-300 text-neutral-700 hover:border-[#ff2a85]'
@@ -158,23 +165,34 @@ export default function Results({
             ))}
           </div>
 
-          {/* Master Regenerate Action */}
-          <button
-            type="button"
-            onClick={() => {
-              if (soundFX) {
-                soundFX.playKeyThud()
-                soundFX.playSpin()
-              }
-              onRegenerate()
-            }}
-            className="tactile-pink-btn px-6 py-2.5 rounded-xl text-white font-mono text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-sm"
-          >
-            <span>↻ REGENERATE 5 MORE</span>
-            <span className="bg-black/60 px-1.5 py-0.5 rounded text-[10px] border border-white/20">
-              R
-            </span>
-          </button>
+          {/* Transport Cluster: Tape Deck Scrubber + Master Regenerate */}
+          <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0">
+            <TapeDeckScrubber
+              historyIndex={historyIndex}
+              totalBatches={totalBatches}
+              onRewind={onRewindBatch}
+              onForward={onForwardBatch}
+              soundFX={soundFX}
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                if (soundFX) {
+                  soundFX.playKeyThud()
+                  soundFX.playSpin()
+                }
+                onRegenerate()
+              }}
+              className="tactile-pink-btn px-4 py-2 rounded-xl text-white font-mono text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-sm"
+              title="Generate 5 new candidate names (Shortcut: R)"
+            >
+              <span>↻ REGENERATE</span>
+              <span className="bg-black/60 px-1.5 py-0.5 rounded text-[10px] border border-white/20">
+                R
+              </span>
+            </button>
+          </div>
 
         </div>
 

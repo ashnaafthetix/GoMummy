@@ -48,6 +48,8 @@ export default function App() {
   const [targetCard, setTargetCard] = useState(() => getTargetCard(CANDIDATE_POOL, INITIAL_BRIEF))
   const [generation, setGeneration] = useState(0)
   const [results, setResults] = useState(() => pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0))
+  const [batchHistory, setBatchHistory] = useState(() => [pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0)])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [filters, setFilters] = useState({ tld: 'any', length: 'any' })
   const [shortlist, setShortlist] = useState([])
   const [compareSel, setCompareSel] = useState([])
@@ -173,6 +175,8 @@ export default function App() {
       state: 'checking',
     }))
     setResults(immediateBatch)
+    setBatchHistory([immediateBatch])
+    setHistoryIndex(0)
     setView('results')
 
     // 2. Immediately initiate live Google DoH check on subject & initial candidates
@@ -185,6 +189,11 @@ export default function App() {
         if (aiCandidates && aiCandidates.length >= 5) {
           const aiBatch = aiCandidates.slice(0, 5).map((c) => ({ ...c, state: 'checking' }))
           setResults(aiBatch)
+          setBatchHistory((prev) => {
+            const copy = [...prev]
+            copy[0] = aiBatch
+            return copy
+          })
           // Run live Google DoH check on newly arrived AI names
           await enrichWithRealDomainChecks(aiBatch, targetWithChecking)
         }
@@ -225,6 +234,11 @@ export default function App() {
       lockedSlots.has(idx) ? oldCard : freshCandidates[idx] || oldCard
     )
     setResults(updatedBatch)
+    setBatchHistory((prev) => {
+      const nextHistory = [...prev.slice(0, historyIndex + 1), updatedBatch]
+      return nextHistory
+    })
+    setHistoryIndex((prev) => prev + 1)
 
     // 2. INSTANT LIVE DOMAIN CHECK: Check newly spawned unlocked candidates with Google DoH (~100ms)
     const unlockedToCheck = updatedBatch.filter((_, idx) => !lockedSlots.has(idx))
@@ -253,6 +267,11 @@ export default function App() {
               )
               const newlyAdded = enriched.filter((_, idx) => !lockedSlots.has(idx))
               enrichWithRealDomainChecks(newlyAdded, null)
+              setBatchHistory((prev) => {
+                const copy = [...prev]
+                copy[copy.length - 1] = enriched
+                return copy
+              })
               return enriched
             })
           }
@@ -267,6 +286,31 @@ export default function App() {
             })
           }
         })
+    }
+  }
+
+  // Session Tape Deck History Scrub Handlers
+  const handleRewindBatch = () => {
+    if (historyIndex > 0) {
+      const targetIdx = historyIndex - 1
+      setHistoryIndex(targetIdx)
+      const pastBatch = batchHistory[targetIdx] || []
+      const merged = pastBatch.map((card, i) => (lockedSlots.has(i) ? results[i] : card))
+      setResults(merged)
+      enrichWithRealDomainChecks(merged, targetCard)
+      if (soundFX) soundFX.playTick()
+    }
+  }
+
+  const handleForwardBatch = () => {
+    if (historyIndex < batchHistory.length - 1) {
+      const targetIdx = historyIndex + 1
+      setHistoryIndex(targetIdx)
+      const forwardBatch = batchHistory[targetIdx] || []
+      const merged = forwardBatch.map((card, i) => (lockedSlots.has(i) ? results[i] : card))
+      setResults(merged)
+      enrichWithRealDomainChecks(merged, targetCard)
+      if (soundFX) soundFX.playTick()
     }
   }
 
@@ -420,6 +464,10 @@ export default function App() {
           onDismissToast={() => setLevelUpToast(null)}
           apiNotice={apiNotice}
           onDismissNotice={() => setApiNotice(null)}
+          historyIndex={historyIndex}
+          totalBatches={Math.max(1, batchHistory.length)}
+          onRewindBatch={handleRewindBatch}
+          onForwardBatch={handleForwardBatch}
         />
       )}
       {view === 'retro-previews' && (
