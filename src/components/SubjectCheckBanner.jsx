@@ -14,6 +14,7 @@ export default function SubjectCheckBanner({
   onToggleCompare,
   isCompared = false,
   soundFX,
+  onOpenViewfinder,
 }) {
   if (!brief?.name || !targetCard) return null
 
@@ -199,6 +200,21 @@ export default function SubjectCheckBanner({
             >
               ⚖️
             </button>
+
+            {/* Real-World Identity Viewfinder Scope */}
+            {onOpenViewfinder && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundFX) soundFX.playLock()
+                  onOpenViewfinder({ ...targetCard, domain: activeSlug })
+                }}
+                className="p-2 rounded-xl border border-neutral-300 bg-white text-neutral-600 hover:text-black font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs hover:border-black"
+                title="View Real-World Identity Scope (Browser tab, App icon, Shipping label)"
+              >
+                👁️
+              </button>
+            )}
           </div>
 
           <button

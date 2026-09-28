@@ -14,6 +14,7 @@ import ArcadeLab from './screens/ArcadeLab.jsx'
 import CompareModal from './components/modals/CompareModal.jsx'
 import ShortlistModal from './components/modals/ShortlistModal.jsx'
 import TerminalFrame from './components/terminal/TerminalFrame.jsx'
+import IdentityViewfinder from './components/hardware/IdentityViewfinder.jsx'
 
 import { generateGeminiBrandNames, getGeminiKey } from './services/geminiService.js'
 import { checkDomainAvailability, checkDomainsBatch } from './services/domainService.js'
@@ -70,6 +71,7 @@ export default function App() {
   // Modal overlays for Compare & Shortlist
   const [compareModalOpen, setCompareModalOpen] = useState(false)
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false)
+  const [viewfinderCard, setViewfinderCard] = useState(null)
 
   // Celebrate on rank advancement with guaranteed auto-dismiss timer
   useEffect(() => {
@@ -468,6 +470,7 @@ export default function App() {
           totalBatches={Math.max(1, batchHistory.length)}
           onRewindBatch={handleRewindBatch}
           onForwardBatch={handleForwardBatch}
+          onOpenViewfinder={setViewfinderCard}
         />
       )}
       {view === 'retro-previews' && (
@@ -482,7 +485,7 @@ export default function App() {
       {view === 'arcade-lab' && (
         <ArcadeLab onBackToApp={() => setView('results')} />
       )}
-      {/* Animated Pop-Up Modals */}
+      {/* Animated Pop-Up Modals & Docked Trays */}
       {compareModalOpen && (
         <CompareModal
           compareSel={compareSel}
@@ -499,6 +502,17 @@ export default function App() {
           shortlist={shortlist}
           onRemove={toggleShortlist}
           onClose={() => setShortlistModalOpen(false)}
+          soundFX={soundFX}
+        />
+      )}
+
+      {/* Real-World Identity Scope Viewfinder */}
+      {viewfinderCard && (
+        <IdentityViewfinder
+          card={viewfinderCard}
+          onClose={() => setViewfinderCard(null)}
+          onToggleShortlist={toggleShortlist}
+          isShortlisted={shortlist.some((s) => s.domain === viewfinderCard.domain)}
           soundFX={soundFX}
         />
       )}

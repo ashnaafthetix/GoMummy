@@ -21,6 +21,9 @@ export default function ResultCard({
   isLocked = false,
   onToggleLock,
   soundFX,
+  onOpenViewfinder,
+  category,
+  rationale,
 }) {
   const [selectedTld, setSelectedTld] = useState(tld || '.com')
   const [activeSlug, setActiveSlug] = useState(domain)
@@ -95,6 +98,28 @@ export default function ResultCard({
 
           {/* Minimal Tactile Action Pills */}
           <div className="flex items-center gap-1.5">
+            {/* Real-World Identity Viewfinder Scope */}
+            {onOpenViewfinder && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (soundFX) soundFX.playLock()
+                  onOpenViewfinder({
+                    name,
+                    domain: activeSlug,
+                    tld: selectedTld,
+                    rationale,
+                    category,
+                  })
+                }}
+                title="Open Real-World Identity Scope (Browser tab, App icon, Shipping label)"
+                className="w-6 h-6 rounded flex items-center justify-center text-xs text-neutral-500 hover:text-black hover:bg-neutral-200 transition-colors cursor-pointer"
+              >
+                👁️
+              </button>
+            )}
+
             {/* Audio Voice Listen Button */}
             <button
               type="button"
