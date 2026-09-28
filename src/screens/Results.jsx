@@ -74,15 +74,6 @@ export default function Results({
         </div>
       </div>
 
-      {/* 2. RETRO-FUTURISTIC MAIN TITLE */}
-      <div className="text-center my-4 sm:my-6">
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-900 font-display uppercase leading-tight">
-          DOMAIN SEARCH IS OUR ART
-        </h1>
-        <p className="text-xs sm:text-sm font-bold tracking-widest text-neutral-500 uppercase mt-1">
-          AVAILABLE ALTERNATIVES VERIFIED VIA GOOGLE DOH
-        </p>
-      </div>
 
       {/* API Notice / Quota Toast */}
       {apiNotice && (

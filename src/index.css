@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
 @theme {
+  --font-headline: "Michroma", "Syncopate", "Orbitron", ui-sans-serif, sans-serif;
+  --font-syncopate: "Syncopate", "Michroma", sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-tech: "Space Grotesk", "Instrument Sans", sans-serif;
   --font-meta: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-pixel: "Silkscreen", monospace;
-  --font-mono: "Space Mono", monospace;
+  --font-mono: "JetBrains Mono", "Space Mono", monospace;
   --font-terminal: "VT323", monospace;
   --font-arcade: "Press Start 2P", monospace;
 
@@ -525,6 +528,29 @@ body { margin: 0; background: #f1efea; }
     0 4px 12px rgba(255, 31, 125, 0.35) !important;
 }
 
+/* FONT HEADLINE UTILITY */
+.font-headline {
+  font-family: var(--font-headline);
+}
+
+/* NEON PINK INSET WELL */
+.neon-pink-well {
+  border: 1.5px solid #ff2a85;
+  box-shadow: 
+    0 0 16px rgba(255, 42, 133, 0.45),
+    inset 0 0 8px rgba(255, 42, 133, 0.12);
+}
+
+/* TACTILE CONSOLE TOP CAPSULE */
+.tactile-console-capsule {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f4ee 40%, #eae7de 100%);
+  border: 1.5px solid #d4cfc5;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
 /* PHOTOREALISTIC SPUN ALUMINUM RADIAL KNOB WITH LATHE GROOVES */
 .spun-aluminum-knob {
   background: 
@@ -548,6 +574,42 @@ body { margin: 0; background: #f1efea; }
     0 8px 18px rgba(0, 0, 0, 0.24),
     0 3px 6px rgba(0, 0, 0, 0.16),
     0 0 0 2px #cfc9be;
+}
+
+/* DELUXE ANISOTROPIC BRUSHED ALUMINUM KNOB WITH NEON PINK BEZEL */
+.spun-aluminum-knob-deluxe {
+  background: 
+    radial-gradient(circle at 45% 40%, rgba(255, 255, 255, 0.5) 0%, transparent 40%),
+    conic-gradient(
+      from 0deg,
+      #dedad2 0deg,
+      #ffffff 45deg,
+      #9e9990 90deg,
+      #edeae3 135deg,
+      #ffffff 180deg,
+      #969188 225deg,
+      #f2efe8 270deg,
+      #ffffff 315deg,
+      #dedad2 360deg
+    );
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 2px rgba(0, 0, 0, 0.35) inset,
+    0 6px 16px rgba(0, 0, 0, 0.22),
+    0 2px 4px rgba(0, 0, 0, 0.14),
+    0 0 0 2px #ff2a85,
+    0 0 14px rgba(255, 42, 133, 0.5);
+}
+
+/* METALLIC BRUSHED FADER THUMB */
+.fader-thumb-metallic {
+  background: 
+    linear-gradient(180deg, #ffffff 0%, #ebe7df 25%, #cfc9be 55%, #aba598 100%);
+  border: 1px solid #8e887d;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -1px 1px rgba(0, 0, 0, 0.25) inset,
+    0 4px 10px rgba(0, 0, 0, 0.32);
 }
 
 /* ILLUMINATED FADER TRACK */

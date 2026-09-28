@@ -25,7 +25,7 @@ export default function TerminalFrame({
   soundFX,
 }) {
   return (
-    <div className="blueprint-cross-grid min-h-screen w-full flex flex-col justify-start items-center py-4 sm:py-6 px-2 sm:px-4 md:px-6 text-neutral-900 selection:bg-[#ff2a85] selection:text-white font-mono relative overflow-x-hidden">
+    <div className="blueprint-cross-grid min-h-screen w-full flex flex-col justify-start items-center py-2 sm:py-4 px-2 sm:px-4 md:px-6 text-neutral-900 selection:bg-[#ff2a85] selection:text-white font-mono relative overflow-x-clip">
       
       {/* Precision Blueprint Crosshair Corner Marks (+) */}
       <span className="fixed left-4 top-4 text-xs font-mono font-bold text-neutral-400 select-none pointer-events-none">+</span>
