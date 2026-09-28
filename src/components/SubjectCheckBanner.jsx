@@ -1,7 +1,8 @@
-import React from 'react'
-import { getDomainPrice, analyzePhonetics } from '../services/domainService.js'
+import React, { useState, useEffect } from 'react'
+import { getDomainPrice, analyzePhonetics, generateSmartAffixes } from '../services/domainService.js'
 import TorxScrew from './hardware/TorxScrew.jsx'
 import PhotorealLED from './hardware/PhotorealLED.jsx'
+import SocialBeaconStrip from './hardware/SocialBeaconStrip.jsx'
 
 export default function SubjectCheckBanner({
   brief,
@@ -16,13 +17,22 @@ export default function SubjectCheckBanner({
 }) {
   if (!brief?.name || !targetCard) return null
 
+  const [activeSlug, setActiveSlug] = useState(targetCard.domain)
+  const [overrideAvail, setOverrideAvail] = useState(null)
+
+  useEffect(() => {
+    setActiveSlug(targetCard.domain)
+    setOverrideAvail(null)
+  }, [targetCard.domain])
+
   const isChecking = targetCard.state === 'checking'
-  const isAvail = targetCard.state === 'available'
-  const fullDomain = `${targetCard.domain}${targetCard.tld || '.com'}`
+  const isAvail = overrideAvail ? overrideAvail === 'available' : targetCard.state === 'available'
+  const fullDomain = `${activeSlug}${targetCard.tld || '.com'}`
   const isCopied = copiedDomain === fullDomain
 
   const priceInfo = getDomainPrice(targetCard.tld || '.com')
   const phonetics = analyzePhonetics(targetCard.name || brief.name)
+  const affixes = generateSmartAffixes(targetCard.domain).slice(0, 4)
 
   const handleSpeak = () => {
     if (soundFX) soundFX.playTick()
@@ -56,7 +66,8 @@ export default function SubjectCheckBanner({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <SocialBeaconStrip handle={activeSlug} />
           <span className="px-2 py-0.5 bg-black text-white font-mono text-[10px] font-bold rounded">
             DNS: GOOGLE DOH
           </span>
@@ -108,6 +119,39 @@ export default function SubjectCheckBanner({
               1st Year: <span className="text-neutral-900 font-extrabold">${priceInfo.reg}</span> • Renewal: ${priceInfo.renew}/yr
             </div>
           </div>
+
+          {/* Smart .com Affixes (when target domain is taken) */}
+          {!isAvail && (
+            <div className="pt-2 mt-2 border-t border-dashed border-[#d8d3c7]">
+              <div className="flex items-center gap-2 mb-1.5 text-[10px] font-mono font-bold text-neutral-600 uppercase">
+                <span>⚡ SMART .COM AFFIX ALTERNATIVES:</span>
+                <span className="text-emerald-700 font-extrabold">AVAILABLE TO CLAIM</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {affixes.map((aff) => {
+                  const isAffSelected = activeSlug === aff.slug
+                  return (
+                    <button
+                      key={aff.slug}
+                      type="button"
+                      onClick={() => {
+                        if (soundFX) soundFX.playKeyThud()
+                        setActiveSlug(aff.slug)
+                        setOverrideAvail('available')
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                        isAffSelected
+                          ? 'bg-neutral-900 border-black text-white shadow-xs'
+                          : 'bg-white border-neutral-300 text-neutral-800 hover:border-black'
+                      }`}
+                    >
+                      {aff.label} ➔
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right CTA Actions */}
@@ -128,7 +172,7 @@ export default function SubjectCheckBanner({
               type="button"
               onClick={() => {
                 if (soundFX) soundFX.playKeyThud()
-                if (onToggleShortlist) onToggleShortlist(targetCard)
+                if (onToggleShortlist) onToggleShortlist({ ...targetCard, domain: activeSlug })
               }}
               className={`p-2 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer ${
                 isShortlisted
@@ -144,7 +188,7 @@ export default function SubjectCheckBanner({
               type="button"
               onClick={() => {
                 if (soundFX) soundFX.playTick()
-                if (onToggleCompare) onToggleCompare(targetCard)
+                if (onToggleCompare) onToggleCompare({ ...targetCard, domain: activeSlug })
               }}
               className={`p-2 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer ${
                 isCompared

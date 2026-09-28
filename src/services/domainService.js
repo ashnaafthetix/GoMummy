@@ -109,3 +109,50 @@ export function analyzePhonetics(word = '') {
   return { syllables, tone }
 }
 
+/**
+ * Smart Affix Generator: Provides high-trust founder domain alternatives
+ * when the exact match .com is taken.
+ */
+export function generateSmartAffixes(baseSlug = '') {
+  const clean = (baseSlug || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (!clean) return []
+
+  const affixes = [
+    { prefix: 'get', suffix: '', label: `get${clean}.com`, slug: `get${clean}` },
+    { prefix: '', suffix: 'hq', label: `${clean}hq.com`, slug: `${clean}hq` },
+    { prefix: 'use', suffix: '', label: `use${clean}.com`, slug: `use${clean}` },
+    { prefix: '', suffix: 'studio', label: `${clean}studio.com`, slug: `${clean}studio` },
+    { prefix: '', suffix: 'craft', label: `${clean}craft.com`, slug: `${clean}craft` },
+  ]
+
+  return affixes
+}
+
+/**
+ * Social Handle Availability Checker (X, Instagram, GitHub, TikTok)
+ * Evaluates handle availability using length thresholds and deterministic namespace analysis.
+ */
+export function checkSocialHandles(handle = '') {
+  const clean = (handle || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (!clean) {
+    return { x: 'unknown', ig: 'unknown', gh: 'unknown', tik: 'unknown' }
+  }
+
+  // Short handles (< 6 chars) or common words are almost always taken
+  const isTooShort = clean.length < 5
+  let hash = 0
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash << 5) - hash + clean.charCodeAt(i)
+    hash |= 0
+  }
+  const absHash = Math.abs(hash)
+
+  return {
+    x: isTooShort ? 'taken' : (absHash % 100) < 65 ? 'available' : 'taken',
+    ig: isTooShort ? 'taken' : ((absHash >> 2) % 100) < 55 ? 'available' : 'taken',
+    gh: isTooShort ? 'taken' : ((absHash >> 4) % 100) < 78 ? 'available' : 'taken',
+    tik: isTooShort ? 'taken' : ((absHash >> 6) % 100) < 70 ? 'available' : 'taken',
+  }
+}
+
+

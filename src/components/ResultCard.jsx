@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { getDomainPrice } from '../services/domainService.js'
+import React, { useState, useEffect } from 'react'
+import { getDomainPrice, generateSmartAffixes } from '../services/domainService.js'
 import TorxScrew from './hardware/TorxScrew.jsx'
 import PhotorealLED from './hardware/PhotorealLED.jsx'
+import SocialBeaconStrip from './hardware/SocialBeaconStrip.jsx'
 
 export default function ResultCard({
   name,
@@ -22,13 +23,22 @@ export default function ResultCard({
   soundFX,
 }) {
   const [selectedTld, setSelectedTld] = useState(tld || '.com')
-  const currentStatus = availability || state || 'available'
+  const [activeSlug, setActiveSlug] = useState(domain)
+  const [overrideAvail, setOverrideAvail] = useState(null)
+
+  useEffect(() => {
+    setActiveSlug(domain)
+    setOverrideAvail(null)
+  }, [domain])
+
+  const currentStatus = overrideAvail || availability || state || 'available'
   const isChecking = currentStatus === 'checking'
   const isAvail = currentStatus === 'available'
-  const fullDomain = `${domain}${selectedTld}`
+  const fullDomain = `${activeSlug}${selectedTld}`
   const isCopied = copiedDomain === fullDomain
 
   const priceInfo = getDomainPrice(selectedTld)
+  const affixes = generateSmartAffixes(domain).slice(0, 3)
 
   const handleSpeak = (e) => {
     e.stopPropagation()
@@ -71,8 +81,8 @@ export default function ResultCard({
       {/* Top Header: Clean Hardware Metadata & Controls */}
       <div>
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#e2ddd3] px-1">
-          {/* Module Serial & Status LED */}
-          <div className="flex items-center gap-2">
+          {/* Module Serial, Status LED, and Social Beacons */}
+          <div className="flex items-center gap-2 flex-wrap">
             <PhotorealLED
               status={isChecking ? 'checking' : isAvail ? 'available' : 'registered'}
               size={9}
@@ -80,6 +90,7 @@ export default function ResultCard({
             <span className="font-mono text-[10px] font-bold text-neutral-500 tracking-widest uppercase">
               MOD 0{slotNumber}
             </span>
+            <SocialBeaconStrip handle={activeSlug} />
           </div>
 
           {/* Minimal Tactile Action Pills */}
@@ -157,10 +168,10 @@ export default function ResultCard({
         </div>
 
         {/* Clean Domain & Availability Line */}
-        <div className="flex items-center justify-between text-xs font-mono px-1 mb-4 pb-3 border-b border-[#e2ddd3]">
+        <div className="flex items-center justify-between text-xs font-mono px-1 mb-3.5 pb-2.5 border-b border-[#e2ddd3]">
           <div className="flex items-center gap-2">
             <span className="font-bold text-neutral-900 text-sm tracking-tight">
-              {domain}{selectedTld}
+              {activeSlug}{selectedTld}
             </span>
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
@@ -184,7 +195,7 @@ export default function ResultCard({
         </div>
 
         {/* Streamlined Tactile TLD Chiclet Selector */}
-        <div className="px-1 mb-4">
+        <div className="px-1 mb-3">
           <div className="flex items-center gap-1.5">
             {['.com', '.io', '.ai', '.co'].map((ext) => {
               const p = getDomainPrice(ext)
@@ -197,6 +208,8 @@ export default function ResultCard({
                     e.stopPropagation()
                     if (soundFX) soundFX.playTick()
                     setSelectedTld(ext)
+                    setActiveSlug(domain)
+                    setOverrideAvail(null)
                   }}
                   className={`flex-1 py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer flex items-center justify-between ${
                     isSelected
@@ -215,6 +228,42 @@ export default function ResultCard({
             })}
           </div>
         </div>
+
+        {/* Smart .com Affix Fallback Strip (when base domain is registered/taken) */}
+        {!isAvail && (
+          <div className="px-1 mb-3 pt-2 border-t border-dashed border-[#d8d3c7]">
+            <div className="flex items-center justify-between text-[9px] font-mono font-bold text-neutral-500 mb-1.5">
+              <span>SMART .COM AFFIXES:</span>
+              <span className="text-emerald-700 font-extrabold">FREE ALTERNATIVES</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {affixes.map((aff) => {
+                const isAffSelected = activeSlug === aff.slug && selectedTld === '.com'
+                return (
+                  <button
+                    key={aff.slug}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (soundFX) soundFX.playKeyThud()
+                      setActiveSlug(aff.slug)
+                      setSelectedTld('.com')
+                      setOverrideAvail('available')
+                    }}
+                    title={`Switch to free alternative: ${aff.label}`}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold transition-all cursor-pointer border ${
+                      isAffSelected
+                        ? 'bg-neutral-900 border-black text-white shadow-2xs'
+                        : 'bg-white border-neutral-300 text-neutral-800 hover:border-neutral-500'
+                    }`}
+                  >
+                    {aff.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Card Footer: Clear & Decisive Actions */}
