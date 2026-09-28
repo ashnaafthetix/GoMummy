@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { getDomainPrice, analyzePhonetics } from '../../services/domainService.js'
+import { getDomainPrice, analyzePhonetics, getPrimaryRegistrarUrl } from '../../services/domainService.js'
+import { exportDossierMarkdown, exportDossierHtml, copyDossierMarkdown } from '../../services/dossierService.js'
 import TorxScrew from '../hardware/TorxScrew.jsx'
 import PhotorealLED from '../hardware/PhotorealLED.jsx'
 
@@ -14,6 +15,7 @@ export default function ShortlistModal({
   soundFX,
 }) {
   const [copiedAll, setCopiedAll] = useState(false)
+  const [copiedDossier, setCopiedDossier] = useState(false)
   const [copiedDomain, setCopiedDomain] = useState(null)
 
   useEffect(() => {
@@ -48,6 +50,33 @@ export default function ShortlistModal({
     if (soundFX) soundFX.playKeyThud()
     setCopiedAll(true)
     setTimeout(() => setCopiedAll(false), 2000)
+  }
+
+  const handleCopyDossier = async () => {
+    if (soundFX) soundFX.playKeyThud()
+    const ok = await copyDossierMarkdown(shortlist, 'GoMummy Brand Expedition')
+    if (ok) {
+      setCopiedDossier(true)
+      setTimeout(() => setCopiedDossier(false), 2000)
+    }
+  }
+
+  const handleExportMarkdown = () => {
+    if (soundFX) soundFX.playKeyThud()
+    exportDossierMarkdown(shortlist, 'GoMummy Brand Expedition')
+  }
+
+  const handleExportHtml = () => {
+    if (soundFX) soundFX.playKeyThud()
+    exportDossierHtml(shortlist, 'GoMummy Brand Expedition')
+  }
+
+  const handleBulkRegister = () => {
+    if (soundFX) soundFX.playKeyThud()
+    if (!shortlist.length) return
+    const query = shortlist.map((s) => `${s.domain}${s.tld || '.com'}`).join(' ')
+    const bulkUrl = `https://porkbun.com/checkout/search?q=${encodeURIComponent(query)}`
+    window.open(bulkUrl, '_blank', 'noopener,noreferrer')
   }
 
   const exportCsv = () => {
@@ -203,34 +232,67 @@ export default function ShortlistModal({
                   </div>
                 </div>
 
-                {/* Bulk Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                {/* Executive Dossier & Bulk Actions Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#e8e4dc] p-2.5 rounded-2xl border border-[#d8d3c8]">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={copyAll}
-                      className="tactile-chiclet px-3.5 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs"
+                      onClick={handleCopyDossier}
+                      className="tactile-chiclet px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs hover:border-black flex items-center gap-1.5"
+                      title="Copy complete executive markdown dossier to clipboard"
                     >
-                      {copiedAll ? '✓ COPIED ALL' : '📋 COPY ALL'}
+                      <span>📋</span>
+                      <span>{copiedDossier ? '✓ COPIED DOSSIER' : 'COPY DOSSIER'}</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={handleExportMarkdown}
+                      className="tactile-chiclet px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs hover:border-black flex items-center gap-1.5"
+                      title="Download Pitch Dossier as formatted Markdown (.md)"
+                    >
+                      <span>📄</span>
+                      <span>PITCH DOSSIER (.MD)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleExportHtml}
+                      className="tactile-chiclet px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs hover:border-black flex items-center gap-1.5"
+                      title="Download standalone executive HTML presentation (Print/Save to PDF)"
+                    >
+                      <span>🖨️</span>
+                      <span>PRESENTATION (.HTML / PDF)</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={exportCsv}
-                      className="tactile-chiclet px-3.5 py-1.5 rounded-lg text-xs font-bold text-neutral-800 cursor-pointer shadow-2xs"
+                      className="tactile-chiclet px-2.5 py-1.5 rounded-lg text-xs font-bold text-neutral-700 cursor-pointer shadow-2xs hover:border-black flex items-center gap-1.5"
+                      title="Export domain valuation dataset as CSV spreadsheet"
                     >
-                      📥 EXPORT CSV
+                      <span>📥</span>
+                      <span>CSV</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={copyAll}
+                      className="tactile-chiclet px-2.5 py-1.5 rounded-lg text-xs font-bold text-neutral-600 cursor-pointer shadow-2xs hover:text-black"
+                      title="Copy bare domain list"
+                    >
+                      {copiedAll ? '✓ COPIED LIST' : 'LIST ONLY'}
                     </button>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (soundFX) soundFX.playKeyThud()
-                      alert(`Bulk checkout cart prepared for ${shortlist.length} domains ($${totalYr1.toFixed(2)})...`)
-                    }}
-                    className="tactile-pink-btn px-5 py-2 rounded-xl text-white text-xs font-black cursor-pointer shadow-sm"
+                    onClick={handleBulkRegister}
+                    className="tactile-pink-btn px-4 py-2 rounded-xl text-white text-xs font-black cursor-pointer shadow-sm flex items-center gap-2"
+                    title="Open multi-domain bulk registrar cart at Porkbun"
                   >
-                    BULK REGISTER ALL (${totalYr1.toFixed(2)}) ➔
+                    <span>BULK CART ({shortlist.length})</span>
+                    <span>${totalYr1.toFixed(2)} ➔</span>
                   </button>
                 </div>
 
@@ -289,8 +351,12 @@ export default function ShortlistModal({
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => alert(`Redirecting to registrar for ${fullDomain}...`)}
-                                    className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded text-[11px] font-bold cursor-pointer"
+                                    onClick={() => {
+                                      if (soundFX) soundFX.playTick()
+                                      window.open(getPrimaryRegistrarUrl(fullDomain), '_blank', 'noopener,noreferrer')
+                                    }}
+                                    className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded text-[11px] font-bold cursor-pointer transition-colors"
+                                    title={`Open ${p.registrar} 1-click cart in new tab`}
                                   >
                                     Buy ${p.reg}
                                   </button>
