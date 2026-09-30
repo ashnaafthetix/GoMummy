@@ -421,7 +421,7 @@ export default function App() {
       }}
       onOpenCompare={() => {
         if (soundFX) soundFX.playLock()
-        setCompareModalOpen(true)
+        setView('compare')
       }}
       onOpenQuestions={() => {
         if (soundFX) soundFX.playLock()
@@ -506,6 +506,17 @@ export default function App() {
       )}
       {view === 'arcade-lab' && (
         <ArcadeLab onBackToApp={() => setView('results')} />
+      )}
+      {view === 'compare' && (
+        <Compare
+          compareSel={compareSel}
+          onRemove={toggleCompare}
+          onNavigate={(v) => {
+            if (soundFX) soundFX.playLock()
+            setView(v)
+          }}
+          soundFX={soundFX}
+        />
       )}
       {/* Animated Pop-Up Modals & Docked Trays */}
       {compareModalOpen && (
