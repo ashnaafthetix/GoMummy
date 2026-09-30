@@ -269,31 +269,6 @@ export default function Compare({ compareSel = [], onRemove, onNavigate, soundFX
                 </div>
               )
             })}
-
-            {/* If only 1 item is docked, show open receptacle slot */}
-            {compareSel.length === 1 && (
-              <div className="rounded-2xl border-2 border-dashed border-[#dbd6cc] bg-[#f2ede4]/40 p-6 flex flex-col items-center justify-center text-center gap-3 min-h-[360px]">
-                <div className="w-10 h-10 rounded-full border border-neutral-300 flex items-center justify-center text-neutral-400 text-lg">
-                  +
-                </div>
-                <div className="font-display font-bold text-sm text-neutral-700">
-                  SLOT 02 OPEN
-                </div>
-                <p className="font-mono text-xs text-neutral-500 max-w-[280px]">
-                  Click the ⚖️ button on any other candidate card to dock it here for side-by-side comparison.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (soundFX) soundFX.playLock()
-                    if (onNavigate) onNavigate('results')
-                  }}
-                  className="tactile-chiclet px-4 py-1.5 rounded-lg text-xs font-bold text-neutral-800"
-                >
-                  Browse Candidates →
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
