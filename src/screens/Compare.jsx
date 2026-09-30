@@ -72,17 +72,36 @@ export default function Compare({ compareSel = [], onRemove, onNavigate, soundFX
         </div>
 
         {/* Content Area */}
-        {compareSel.length === 0 ? (
+        {compareSel.length < 2 ? (
           <div className="rounded-2xl border border-dashed border-[#dbd6cc] bg-[#f2ede4]/70 p-8 sm:p-14 text-center flex flex-col items-center justify-center gap-3">
             <div className="w-12 h-12 rounded-full bg-neutral-200 border border-neutral-300 flex items-center justify-center text-xl shadow-inner">
               ⚖️
             </div>
             <h2 className="font-display text-lg font-bold text-neutral-900">
-              Dual Compare Bay Empty
+              {compareSel.length === 0 ? 'Nothing to compare yet' : '1 name docked — need 2 to compare'}
             </h2>
             <p className="font-mono text-xs text-neutral-500 max-w-[440px] leading-relaxed">
-              Click the <span className="font-bold text-neutral-800">⚖️</span> balance scale button on any two candidate cards in the results screen to dock them here for side-by-side analysis.
+              {compareSel.length === 0
+                ? 'Add two or more names to compare from the results screen.'
+                : 'Add one more name from the results screen to unlock real side-by-side comparison.'}
             </p>
+            {compareSel.length === 1 && (
+              <div className="mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#d8d3c8] bg-white font-mono text-xs text-neutral-800 shadow-2xs">
+                <span className="font-bold">{compareSel[0].name || compareSel[0].domain}</span>
+                <span className="text-neutral-500 text-[11px]">({compareSel[0].domain}{compareSel[0].tld || '.com'})</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundFX) soundFX.playKeyThud()
+                    onRemove(compareSel[0])
+                  }}
+                  className="ml-2 w-5 h-5 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-red-600 font-bold flex items-center justify-center cursor-pointer transition-colors"
+                  title="Remove name"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -91,7 +110,7 @@ export default function Compare({ compareSel = [], onRemove, onNavigate, soundFX
               }}
               className="mt-3 tactile-pink-btn px-5 py-2 rounded-xl text-white font-mono text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-sm"
             >
-              <span>EXPLORE RESULTS</span>
+              <span>{compareSel.length === 0 ? 'EXPLORE RESULTS' : 'SELECT SECOND NAME'}</span>
               <span>→</span>
             </button>
           </div>
