@@ -52,8 +52,34 @@ export default function App() {
   const [results, setResults] = useState(() => pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0))
   const [batchHistory, setBatchHistory] = useState(() => [pickBatch(CANDIDATE_POOL, [], INITIAL_BRIEF, 0)])
   const [historyIndex, setHistoryIndex] = useState(0)
+  const SHORTLIST_STORAGE_KEY = 'gomummy_shortlist'
+
   const [filters, setFilters] = useState({ tld: 'any', length: 'any' })
-  const [shortlist, setShortlist] = useState([])
+  const [shortlist, setShortlist] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('gomummy_shortlist')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed)) return parsed
+        }
+      } catch (e) {
+        console.warn('Failed to load shortlist from localStorage:', e)
+      }
+    }
+    return []
+  })
+
+  // Synchronize shortlist changes to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(SHORTLIST_STORAGE_KEY, JSON.stringify(shortlist))
+      } catch (e) {
+        console.warn('Failed to save shortlist to localStorage:', e)
+      }
+    }
+  }, [shortlist])
   const [compareSel, setCompareSel] = useState([])
   const [answers, setAnswers] = useState({})
   const [regenCount, setRegenCount] = useState(0)
@@ -417,7 +443,7 @@ export default function App() {
       questionsCount={Object.keys(answers).length}
       onOpenShortlist={() => {
         if (soundFX) soundFX.playLock()
-        setShortlistModalOpen(true)
+        setView('shortlist')
       }}
       onOpenCompare={() => {
         if (soundFX) soundFX.playLock()
@@ -506,6 +532,17 @@ export default function App() {
       )}
       {view === 'arcade-lab' && (
         <ArcadeLab onBackToApp={() => setView('results')} />
+      )}
+      {view === 'shortlist' && (
+        <Shortlist
+          shortlist={shortlist}
+          onRemove={toggleShortlist}
+          onNavigate={(v) => {
+            if (soundFX) soundFX.playLock()
+            setView(v)
+          }}
+          soundFX={soundFX}
+        />
       )}
       {view === 'compare' && (
         <Compare
